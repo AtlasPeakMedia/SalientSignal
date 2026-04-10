@@ -74,12 +74,18 @@ class RetryingFakeClient:
         return self.success_df
 
 
-def _seven_day_df() -> pd.DataFrame:
-    """Build a synthetic 7-day TimelineVolRaw DataFrame."""
+def _seven_day_df(volume_col: str = "Volume Raw") -> pd.DataFrame:
+    """Build a synthetic 7-day TimelineVolRaw DataFrame.
+
+    ``volume_col`` toggles between the gdeltdoc 1.10.3 column name ("Volume Raw")
+    and the 1.12+ rename ("Article Count"). Default keeps the existing tests
+    exercising the legacy name; new tests explicitly ask for "Article Count"
+    to cover the production path we actually ship on.
+    """
     return pd.DataFrame(
         {
             "datetime": [pd.Timestamp(f"2025-01-{i + 1:02d}") for i in range(7)],
-            "Volume Raw": [10, 12, 15, 11, 13, 14, 16],
+            volume_col: [10, 12, 15, 11, 13, 14, 16],
             "All Articles": [100, 120, 150, 110, 130, 140, 160],
         }
     )
@@ -162,6 +168,74 @@ class TestSuccessPath:
         assert len(result) == 7
 
 
+class TestVolumeColumnRename:
+    """gdeltdoc 1.12.0 renamed the volume column from "Volume Raw" to
+    "Article Count". We accept both — this test class verifies both paths."""
+
+    def test_accepts_article_count_column_gdeltdoc_1_12(self, monkeypatch):
+        """Production hit this path on 2026-04-10 — every outlet returned
+        ['All Articles', 'Article Count', 'datetime'] and the old parser
+        treated every response as empty."""
+        fake_client = FakeGdeltClient(
+            response_df=_seven_day_df(volume_col="Article Count"),
+        )
+        monkeypatch.setattr(gtc, "_new_doc_client", lambda timeout: fake_client)
+        monkeypatch.setattr("time.sleep", lambda _: None)
+
+        result = query_domain_timeline(
+            "tass.ru",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 1, 7),
+            rate_limit_seconds=0,
+        )
+
+        assert len(result.rows) == 7
+        assert result.rows[0].volume_raw == 10
+        assert result.total_volume == 91
+
+    def test_accepts_legacy_volume_raw_column(self, monkeypatch):
+        """Backwards compatibility: if a downgraded dev env runs gdeltdoc
+        1.10.3, the old "Volume Raw" column still parses correctly."""
+        fake_client = FakeGdeltClient(
+            response_df=_seven_day_df(volume_col="Volume Raw"),
+        )
+        monkeypatch.setattr(gtc, "_new_doc_client", lambda timeout: fake_client)
+        monkeypatch.setattr("time.sleep", lambda _: None)
+
+        result = query_domain_timeline(
+            "rt.com",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 1, 7),
+            rate_limit_seconds=0,
+        )
+
+        assert len(result.rows) == 7
+        assert result.rows[0].volume_raw == 10
+
+    def test_missing_both_volume_columns_returns_empty_with_warning(
+        self, monkeypatch, caplog
+    ):
+        """If a future gdeltdoc rename breaks BOTH known names, parser
+        logs a warning and returns empty instead of crashing."""
+        import logging
+        caplog.set_level(logging.WARNING, logger="src.gdelt_timeline_client")
+
+        bad_df = pd.DataFrame(
+            {
+                "datetime": [pd.Timestamp("2025-01-01")],
+                "Completely New Column Name": [42],
+                "All Articles": [100],
+            }
+        )
+        parsed = gtc._parse_timeline_dataframe(bad_df, domain="example.com")
+
+        assert parsed == []
+        assert any(
+            "missing any recognized volume column" in rec.message
+            for rec in caplog.records
+        )
+
+
 # ---------------------------------------------------------------------------
 # Empty / degenerate response handling
 # ---------------------------------------------------------------------------
@@ -191,7 +265,7 @@ class TestEmptyResults:
         assert gtc._parse_timeline_dataframe(None, domain="example.com") == []
 
     def test_parser_handles_missing_columns_with_warning(self, caplog):
-        """Missing 'datetime' or 'Volume Raw' columns → empty + warning log."""
+        """Missing 'datetime' column → empty + warning log."""
         import logging
         caplog.set_level(logging.WARNING, logger="src.gdelt_timeline_client")
 
@@ -199,7 +273,9 @@ class TestEmptyResults:
         parsed = gtc._parse_timeline_dataframe(bad_df, domain="example.com")
 
         assert parsed == []
-        assert any("missing expected columns" in rec.message for rec in caplog.records)
+        assert any(
+            "missing datetime column" in rec.message for rec in caplog.records
+        )
 
 
 # ---------------------------------------------------------------------------

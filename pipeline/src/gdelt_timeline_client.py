@@ -83,7 +83,17 @@ DEFAULT_TIMELINE_RATE_LIMIT_SECONDS = 2.5
 # The DataFrame columns returned by gdeltdoc.timeline_search("timelinevolraw").
 # Documented at https://github.com/alex9smith/gdelt-doc-api#timeline-queries
 TIMELINE_DATETIME_COL = "datetime"
-TIMELINE_VOLUME_COL = "Volume Raw"
+# gdeltdoc renamed the volume column between 1.10.3 ("Volume Raw") and
+# 1.12.0 ("Article Count"). We accept either — whichever shows up first in
+# ``df.columns`` wins. If neither is present, the parser logs a warning
+# and returns empty (matching the "GDELT schema drift" defensive posture).
+#
+# Empirical evidence: the first production backfill run on 2026-04-10 hit
+# gdeltdoc 1.12.0 and saw every outlet's DataFrame returning
+# ['All Articles', 'Article Count', 'datetime'] instead of the documented
+# ['All Articles', 'Volume Raw', 'datetime']. The library's release notes
+# didn't flag the rename.
+TIMELINE_VOLUME_COLS: tuple[str, ...] = ("Article Count", "Volume Raw")
 
 
 @dataclass
@@ -158,10 +168,12 @@ def _build_timeline_filters(domain: str, start_date: date, end_date: date):
 def _parse_timeline_dataframe(df: pd.DataFrame, domain: str) -> list[TimelineRow]:
     """Convert a gdeltdoc TimelineVolRaw DataFrame into ``TimelineRow`` records.
 
-    Expected DataFrame columns (gdeltdoc 1.10.3+):
+    Expected DataFrame columns:
 
         datetime        pandas.Timestamp — one row per day
-        Volume Raw      int — raw article count on that day
+        volume          int — raw article count on that day. Column name is
+                        "Article Count" in gdeltdoc 1.12+ or "Volume Raw" in
+                        1.10.3 — we accept either. See TIMELINE_VOLUME_COLS.
         All Articles    int — total matching articles (IGNORED — drifts over time)
 
     Empty DataFrame is NOT an error. It's a valid "no activity" signal.
@@ -171,11 +183,29 @@ def _parse_timeline_dataframe(df: pd.DataFrame, domain: str) -> list[TimelineRow
     if df is None or df.empty:
         return []
 
-    if TIMELINE_DATETIME_COL not in df.columns or TIMELINE_VOLUME_COL not in df.columns:
+    # Datetime column is stable across gdeltdoc versions.
+    if TIMELINE_DATETIME_COL not in df.columns:
         logger.warning(
-            "TimelineVolRaw response for domain=%s missing expected columns. "
+            "TimelineVolRaw response for domain=%s missing datetime column. "
             "Got: %s",
             domain,
+            sorted(df.columns),
+        )
+        return []
+
+    # Volume column name changed between gdeltdoc 1.10.3 and 1.12.0.
+    # Accept either. Whichever shows up first in TIMELINE_VOLUME_COLS wins.
+    volume_col: str | None = None
+    for candidate in TIMELINE_VOLUME_COLS:
+        if candidate in df.columns:
+            volume_col = candidate
+            break
+    if volume_col is None:
+        logger.warning(
+            "TimelineVolRaw response for domain=%s missing any recognized "
+            "volume column (tried %s). Got: %s",
+            domain,
+            list(TIMELINE_VOLUME_COLS),
             sorted(df.columns),
         )
         return []
@@ -193,12 +223,12 @@ def _parse_timeline_dataframe(df: pd.DataFrame, domain: str) -> list[TimelineRow
             continue
 
         try:
-            volume = int(r[TIMELINE_VOLUME_COL])
+            volume = int(r[volume_col])
         except (ValueError, TypeError):
             logger.debug(
                 "Skipping unparseable volume in timeline row for %s: %r",
                 domain,
-                r[TIMELINE_VOLUME_COL],
+                r[volume_col],
             )
             continue
 
@@ -328,5 +358,5 @@ __all__ = [
     "query_domain_timeline",
     "DEFAULT_TIMELINE_RATE_LIMIT_SECONDS",
     "TIMELINE_DATETIME_COL",
-    "TIMELINE_VOLUME_COL",
+    "TIMELINE_VOLUME_COLS",
 ]
