@@ -1,43 +1,24 @@
 /**
- * DUMMY DATA for development.
- * Replaced by real Supabase queries once pipeline is live.
+ * DUMMY DATA fixture for development and preview deployments.
  *
- * Country activity data for ~150 countries (excluding US/FVEY).
- * Each country has a baseline deviation ratio (today vs. 30-day average)
- * for both DOMESTIC and INTERNATIONAL audience types.
+ * Shape of every export here mirrors the types in `./types.ts`, which is the
+ * canonical source of truth. The unified data layer (`./data.ts`) reads
+ * either this fixture or live Supabase rows depending on the feature flag.
+ *
+ * Country activity for ~150 countries (US/FVEY hardcoded excluded).
  */
 
-export type AudienceType = "DOMESTIC" | "INTERNATIONAL";
+import type {
+  AudienceType,
+  CountryActivity,
+  CoordinationArc,
+  DeviationLevel,
+  Headline,
+  TrendingTheme,
+} from "./types";
 
-export type DeviationLevel =
-  | "deepBlue"
-  | "steelBlue"
-  | "coolGray"
-  | "neutral"
-  | "amber"
-  | "orange"
-  | "red";
-
-export interface CountryActivity {
-  iso2: string; // ISO 3166-1 alpha-2
-  name: string;
-  flag: string; // Emoji
-  region: string;
-  domestic: {
-    today: number;
-    baseline: number;
-    ratio: number;
-    zScore: number;
-    level: DeviationLevel;
-  };
-  international: {
-    today: number;
-    baseline: number;
-    ratio: number;
-    zScore: number;
-    level: DeviationLevel;
-  };
-}
+// Re-export for legacy callers that still import types from here.
+export type { AudienceType, CountryActivity, CoordinationArc, DeviationLevel, Headline, TrendingTheme };
 
 /**
  * Calculate deviation level from ratio + z-score.
@@ -252,18 +233,8 @@ export function getCountryActivity(iso2: string): CountryActivity | null {
 /**
  * Coordination arcs — countries pushing the same theme within a 24-hour window.
  * Each arc connects two countries and represents detected coordination.
+ * Interface lives in ./types.ts.
  */
-export interface CoordinationArc {
-  startIso: string;
-  endIso: string;
-  theme: string;
-  themeLabel: string;
-  countries: string[];
-  score: number; // 0.0 - 1.0
-  startCountry: string;
-  endCountry: string;
-}
-
 export const COORDINATION_ARCS: CoordinationArc[] = [
   // Iran-coordinated regional narratives
   {
@@ -320,19 +291,8 @@ export const COORDINATION_ARCS: CoordinationArc[] = [
 ];
 
 /**
- * Dummy headlines for showcase countries.
- * Used on country detail pages.
+ * Dummy headlines for showcase countries. Interface lives in ./types.ts.
  */
-export interface Headline {
-  outlet: string;
-  outletLanguage: string;
-  audienceType: AudienceType;
-  title: string;
-  publishedAt: string; // ISO timestamp
-  url: string;
-  themes: string[];
-}
-
 export const HEADLINES: Record<string, Headline[]> = {
   RU: [
     {

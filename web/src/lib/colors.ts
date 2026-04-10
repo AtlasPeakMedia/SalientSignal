@@ -3,7 +3,7 @@
  * Mirrors Algorithm 2 from the spec.
  */
 
-import type { DeviationLevel } from "./dummy-data";
+import type { DeviationLevel } from "./types";
 
 export const DEVIATION_COLORS: Record<DeviationLevel, string> = {
   deepBlue: "#1A3A5C",   // Significant silence

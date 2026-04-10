@@ -2,22 +2,28 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Wordmark from "@/components/Brand/Wordmark";
 import {
-  getCountryActivity,
+  getCountryActivityByCode,
   getCountryHeadlines,
-  type AudienceType,
-} from "@/lib/dummy-data";
+  isUsingDummyData,
+} from "@/lib/data";
+import type { AudienceActivity, AudienceType, Headline } from "@/lib/types";
 import { DEVIATION_COLORS, DEVIATION_LABELS } from "@/lib/colors";
 
 interface PageProps {
   params: Promise<{ code: string }>;
 }
 
+export const revalidate = 300;
+
 export default async function CountryPage({ params }: PageProps) {
   const { code } = await params;
-  const country = getCountryActivity(code);
+  const [country, headlines] = await Promise.all([
+    getCountryActivityByCode(code),
+    getCountryHeadlines(code),
+  ]);
   if (!country) notFound();
 
-  const headlines = getCountryHeadlines(code);
+  const isDummy = isUsingDummyData();
   const domestic = headlines.filter((h) => h.audienceType === "DOMESTIC");
   const international = headlines.filter((h) => h.audienceType === "INTERNATIONAL");
 
@@ -53,10 +59,19 @@ export default async function CountryPage({ params }: PageProps) {
             month: "long",
             day: "numeric",
           })}
-          . Compare what {country.name}'s state outlets are publishing for domestic
-          audiences versus international audiences. Baselines are 30-day rolling
-          averages.
+          . Compare what {country.name}&apos;s state outlets are publishing for
+          domestic audiences versus international audiences. Baselines are
+          30-day rolling averages.
         </p>
+        {country.coldStart && (
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-bg-divider text-xs text-text-secondary">
+            <span
+              aria-hidden="true"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-accent-tealBright animate-pulse"
+            />
+            Baseline calibrating — deviation metrics are suppressed until ~day 21.
+          </div>
+        )}
       </section>
 
       {/* Audience split */}
@@ -80,7 +95,9 @@ export default async function CountryPage({ params }: PageProps) {
             Source: GDELT 2.0 + monitored RSS feeds · State media classification
             from State Media Monitor (CEU)
           </span>
-          <span className="text-mono">DEMO DATA</span>
+          <span className="text-mono">
+            {isDummy ? "DEMO DATA" : "LIVE DATA"}
+          </span>
         </div>
       </footer>
     </main>
@@ -89,12 +106,8 @@ export default async function CountryPage({ params }: PageProps) {
 
 interface AudienceColumnProps {
   audience: AudienceType;
-  activity: ReturnType<typeof getCountryActivity> extends infer T
-    ? T extends { domestic: infer D }
-      ? D
-      : never
-    : never;
-  headlines: ReturnType<typeof getCountryHeadlines>;
+  activity: AudienceActivity;
+  headlines: Headline[];
 }
 
 function AudienceColumn({ audience, activity, headlines }: AudienceColumnProps) {
@@ -143,7 +156,7 @@ function AudienceColumn({ audience, activity, headlines }: AudienceColumnProps) 
       </div>
 
       {/* Status pill */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-center gap-2 flex-wrap">
         <div
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border"
           style={{
@@ -155,7 +168,32 @@ function AudienceColumn({ audience, activity, headlines }: AudienceColumnProps) 
           <span>{levelLabel}</span>
           <span className="text-mono opacity-75">z-score {activity.zScore}</span>
         </div>
+        {activity.confidence && activity.confidence !== "HIGH" && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded border border-bg-divider text-xs text-text-secondary text-mono uppercase">
+            conf {activity.confidence}
+          </div>
+        )}
       </div>
+
+      {/* Top outlets (live data only) */}
+      {activity.topOutlets && activity.topOutlets.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+            Top Outlets
+          </h3>
+          <ul className="flex flex-wrap gap-2">
+            {activity.topOutlets.map((o) => (
+              <li
+                key={o.domain}
+                className="text-xs px-2 py-1 rounded border border-bg-divider text-text-body text-mono"
+              >
+                {o.domain}{" "}
+                <span className="text-text-secondary">({o.count})</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Headlines */}
       <div>
@@ -164,7 +202,8 @@ function AudienceColumn({ audience, activity, headlines }: AudienceColumnProps) 
         </h3>
         {headlines.length === 0 ? (
           <div className="text-sm text-text-secondary italic py-6 text-center border border-dashed border-bg-divider rounded-md">
-            No headlines available for demo. Will populate when pipeline is live.
+            No headlines ingested yet for this audience. Pipeline may still be
+            warming up.
           </div>
         ) : (
           <ul className="space-y-3">
@@ -175,10 +214,23 @@ function AudienceColumn({ audience, activity, headlines }: AudienceColumnProps) 
               >
                 <div className="flex items-center gap-2 text-xs text-text-secondary mb-1">
                   <span className="text-mono uppercase">{h.outlet}</span>
-                  <span>·</span>
-                  <span className="text-mono uppercase">{h.outletLanguage}</span>
+                  {h.outletLanguage && (
+                    <>
+                      <span>·</span>
+                      <span className="text-mono uppercase">
+                        {h.outletLanguage}
+                      </span>
+                    </>
+                  )}
                 </div>
-                <p className="text-sm text-text-body leading-snug">{h.title}</p>
+                <a
+                  href={h.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-text-body leading-snug hover:text-accent-teal transition-colors block"
+                >
+                  {h.title}
+                </a>
                 {h.themes.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {h.themes.map((t) => (
