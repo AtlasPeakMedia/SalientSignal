@@ -5,10 +5,13 @@ import Link from "next/link";
 import Wordmark from "@/components/Brand/Wordmark";
 import Clock from "@/components/Clock";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import ViewToggle from "@/components/Globe/ViewToggle";
+import ArcModal from "@/components/Globe/ArcModal";
 import ColorLegend from "@/components/Globe/ColorLegend";
+import CountrySearch from "@/components/Globe/CountrySearch";
 import GlobeWrapper from "@/components/Globe/GlobeWrapper";
+import InlineTutorial from "@/components/Globe/InlineTutorial";
 import RegionFilter from "@/components/Globe/RegionFilter";
+import ViewToggle from "@/components/Globe/ViewToggle";
 import HistoricalDataBanner from "@/components/HistoricalDataBanner";
 import { makeRegionFilter, type Region } from "@/lib/country-regions";
 import type {
@@ -42,6 +45,10 @@ export default function HomePageClient({
   const [selectedRegions, setSelectedRegions] = useState<Set<Region> | null>(
     null,
   );
+  // Arc click state: when a coordination arc is clicked, the GlobeWrapper
+  // calls onArcClick which sets this to the original arc. The ArcModal reads
+  // it and renders itself. Closing the modal sets it back to null.
+  const [clickedArc, setClickedArc] = useState<CoordinationArc | null>(null);
 
   // Apply the region filter to the raw country list before anything else
   // consumes it. Top movers, globe polygons, trending themes, and the footer
@@ -161,6 +168,7 @@ export default function HomePageClient({
             selected={selectedRegions}
             onChange={setSelectedRegions}
           />
+          <CountrySearch countries={countryActivity} />
         </div>
       </div>
 
@@ -171,9 +179,16 @@ export default function HomePageClient({
             viewMode={viewMode}
             countryActivity={filteredCountryActivity}
             coordinationArcs={coordinationArcs}
+            onArcClick={setClickedArc}
           />
         </ErrorBoundary>
       </div>
+
+      {/* Arc modal (opens when user clicks a coordination arc) */}
+      <ArcModal arc={clickedArc} onClose={() => setClickedArc(null)} />
+
+      {/* First-visit inline tutorial (dismissible + localStorage-backed) */}
+      <InlineTutorial />
 
       {/* Bottom panel — top movers + themes */}
       <section className="max-w-[1400px] mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-2 gap-6">

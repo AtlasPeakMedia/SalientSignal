@@ -54,6 +54,12 @@ interface Props {
   viewMode: ViewMode;
   countryActivity: CountryActivity[];
   coordinationArcs: CoordinationArc[];
+  /**
+   * Optional callback fired when a coordination arc is clicked. The parent
+   * component (HomePageClient) uses this to open an ArcModal with the full
+   * context of the clicked arc.
+   */
+  onArcClick?: (arc: CoordinationArc) => void;
 }
 
 // Approximate country centroids used for arc endpoints. Natural Earth has
@@ -112,6 +118,7 @@ export default function GlobeWrapper({
   viewMode,
   countryActivity,
   coordinationArcs,
+  onArcClick,
 }: Props) {
   const router = useRouter();
   const globeRef = useRef<unknown>(null);
@@ -163,7 +170,8 @@ export default function GlobeWrapper({
   }, []);
 
   // Build arc data with lat/lng coordinates, skipping any arc whose endpoints
-  // we don't have centroids for.
+  // we don't have centroids for. Keep a reference to the original arc on each
+  // rendered record so the click handler can surface it to the parent.
   const arcData = useMemo(
     () =>
       coordinationArcs
@@ -187,6 +195,9 @@ export default function GlobeWrapper({
                   : "#00897B",
             stroke: 1 + arc.score * 2,
             label: arc.themeLabel,
+            // Retain the original CoordinationArc so onArcClick can expose
+            // the full context to the parent via the ArcModal.
+            __source: arc,
           };
         }),
     [coordinationArcs],
@@ -305,6 +316,11 @@ export default function GlobeWrapper({
         arcDashAnimateTime={3000}
         arcAltitude={0.25}
         arcLabel="label"
+        onArcClick={(d: unknown) => {
+          if (!onArcClick) return;
+          const record = d as { __source?: CoordinationArc };
+          if (record?.__source) onArcClick(record.__source);
+        }}
       />
     </div>
   );
