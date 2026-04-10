@@ -1,0 +1,47 @@
+# SalientSignal Render Blueprint — Phase E17 of the backfill plan.
+#
+# This file declares the hourly cron service that runs the live SalientSignal
+# data pipeline on Render's free tier. When you import this repository into
+# Render via "New Blueprint", Render reads this file, builds the Dockerfile
+# it references, and sets up the cron schedule automatically. You still have
+# to paste the env vars manually in the dashboard (sync: false below) because
+# they contain secrets.
+#
+# Documentation: https://render.com/docs/blueprint-spec
+# See also: docs/RENDER_DEPLOYMENT.md for the full step-by-step runbook.
+
+services:
+  - type: cron
+    name: salientsignal-pipeline
+    runtime: docker
+    # Path is relative to the repo root.
+    dockerfilePath: pipeline/Dockerfile
+    dockerContext: .
+
+    # Cron schedule — runs at :07 past every hour in UTC.
+    # The :07 offset avoids the top-of-hour GDELT rate-limit spike where
+    # every cron in the world fires simultaneously.
+    schedule: "7 * * * *"
+
+    plan: free
+
+    envVars:
+      # Supabase connection. Marked sync: false so Render expects the
+      # operator to paste the actual values in the dashboard rather than
+      # committing them to git.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+
+      # Optional: log level. INFO is safe for production. Use DEBUG only
+      # for short-lived diagnostic sessions because Render free tier has
+      # limited log retention.
+      - key: LOG_LEVEL
+        value: INFO
+
+      # Optional: override the pipeline time budget. Default 50 min matches
+      # the run_pipeline default. Lower this to 45 min if you want more
+      # headroom against the cron overlap window.
+      - key: PIPELINE_TIME_BUDGET_SECONDS
+        value: "3000"
