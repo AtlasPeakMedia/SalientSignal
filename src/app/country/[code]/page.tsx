@@ -6,6 +6,7 @@ import {
   getCountryHeadlines,
   isUsingDummyData,
 } from "@/lib/data";
+import { requireAuth } from "@/lib/auth";
 import type { AudienceActivity, AudienceType, Headline } from "@/lib/types";
 import { DEVIATION_COLORS, DEVIATION_LABELS } from "@/lib/colors";
 
@@ -19,6 +20,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function CountryPage({ params }: PageProps) {
+  // Pre-launch password gate.
+  await requireAuth();
+
   const { code } = await params;
   const [country, headlines] = await Promise.all([
     getCountryActivityByCode(code),
