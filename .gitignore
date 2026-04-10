@@ -72,6 +72,14 @@ Thumbs.db
 data/cache/
 data/raw/
 
+# Backfill output files (~100 MB each). Generated locally by
+# pipeline/scripts/run_backfill.py and imported to Supabase via
+# import_backfill.py. NEVER commit these — they're too large and
+# contain ephemeral run metadata.
+pipeline/data/backfill*.json
+pipeline/data/backfill_import_manifest_*.json
+pipeline/logs/
+
 # GDELT raw downloads
 *.gkg.csv
 *.export.CSV
