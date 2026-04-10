@@ -55,6 +55,130 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Anniversary date table (P2-H5 fix — was only 6 dates, missing major ones)
+#
+# Format: (month, day) → human-readable description
+#
+# Phase A is Gregorian-calendar only. Phase B will add:
+#   - Eid al-Fitr / Eid al-Adha (lunar, 11 days earlier each year)
+#   - Chinese New Year (lunar, Jan-Feb window)
+#   - Tet (lunar, Vietnam)
+#   - Nowruz (Iran, Mar 20-21 — slightly variable)
+#   - Country-specific religious/political observances computed from ephemeris
+# ---------------------------------------------------------------------------
+_ANNIVERSARY_DATES: dict[tuple[int, int], str] = {
+    # January
+    (1, 1):  "New Year — global narrative, reactive coverage expected",
+    (1, 26): "India Republic Day — annual narrative",
+    # February
+    (2, 11): "Iranian Revolution Day — annual narrative",
+    (2, 16): "DPRK Kim Jong-il's birthday — annual narrative",
+    (2, 24): "Russia-Ukraine war anniversary — annual narrative (since 2022)",
+    # March
+    (3, 8):  "International Women's Day — global coverage, state media reactive",
+    (3, 21): "Nowruz / Persian New Year — Iran, Central Asia, diaspora",
+    # May
+    (5, 1):  "International Workers' Day / May Day — global leftist narrative",
+    (5, 5):  "Cinco de Mayo (Mexico) — minor observance",
+    (5, 9):  "Victory Day (Russia, Belarus, former Soviet states) — major narrative",
+    # June
+    (6, 1):  "International Children's Day — reactive coverage",
+    (6, 4):  "Tiananmen anniversary (China) — annual suppression/counter-narrative",
+    (6, 12): "Russia Day — annual narrative",
+    # July
+    (7, 1):  "Hong Kong handover anniversary / China CCP founding — annual narrative",
+    (7, 4):  "US Independence Day — reactive anti-US narrative expected",
+    # August
+    (8, 6):  "Hiroshima anniversary — reactive anti-US narrative",
+    (8, 9):  "Nagasaki anniversary — reactive anti-US narrative",
+    (8, 15): "India Independence Day / Korea Liberation Day — dual anniversary",
+    # September
+    (9, 1):  "Start of WWII anniversary — Russia/Poland/Germany narratives",
+    (9, 3):  "China Victory Over Japan Day — annual narrative",
+    (9, 9):  "DPRK founding anniversary — annual narrative",
+    (9, 11): "9/11 anniversary — reactive anti-US narrative expected",
+    # October
+    (10, 1): "China National Day / DPRK — annual narrative",
+    (10, 7): "Russia Putin's birthday — annual narrative",
+    # November
+    (11, 4): "Russia Unity Day — annual narrative",
+    (11, 7): "October Revolution anniversary (Russia) — annual narrative",
+    # December
+    (12, 25): "Christmas — global reactive coverage, major event expected",
+    (12, 26): "Boxing Day / Soviet Union dissolution anniversary (1991)",
+    (12, 30): "DPRK Kim Jong-il death anniversary — annual narrative",
+    (12, 31): "New Year's Eve — global reactive coverage",
+}
+
+
+# ---------------------------------------------------------------------------
+# Generic theme detection (P2-H6 fix — was overly broad substring match)
+#
+# Previously, `any(theme.startswith(g) or g in theme for g in generic_themes)`
+# would match `WB_2024_ANTI-WESTERN_PROPAGANDA` as generic (because `WB_` is
+# in the list), flagging it even though it's a narrow narrative theme.
+#
+# Fix: maintain an explicit exact-match list of high-level GDELT themes that
+# tend to be wire-syndicated reactive coverage, and a second list of PREFIXES
+# that are explicitly narrative-specific (never treat these as generic).
+# ---------------------------------------------------------------------------
+_GENERIC_THEME_EXACT_OR_PREFIX: frozenset[str] = frozenset({
+    # CrisisLex: generic crisis/disaster coverage
+    "CRISISLEX_CRISISLEXREC",
+    "CRISISLEX_C07_SAFETY",
+    "NATURAL_DISASTER",
+    "NATURAL_DISASTER_EARTHQUAKE",
+    "NATURAL_DISASTER_FLOOD",
+    "NATURAL_DISASTER_HURRICANE",
+    "NATURAL_DISASTER_TYPHOON",
+    "NATURAL_DISASTER_TSUNAMI",
+    "NATURAL_DISASTER_WILDFIRE",
+    "NATURAL_DISASTER_VOLCANO",
+    # Generic economic coverage (not country-specific narratives)
+    "ECON_STOCKMARKET",
+    "ECON_TAXATION",
+    "ECON_INTEREST_RATES",
+    "ECON_INFLATION",
+    # Generic terror/security coverage
+    "TERROR",
+    "TERRORISM",
+    "KILL",
+    # Generic events
+    "ELECTION",
+    "WB_2670_JOBS",
+})
+
+# Narrative-specific prefixes that should NEVER be flagged as generic
+_NARRATIVE_SPECIFIC_PREFIXES: frozenset[str] = frozenset({
+    "WB_2024_ANTI",       # Anti-X narratives are by definition specific
+    "SOC_POINTSOFINTEREST_",  # Location-specific
+    "TAX_POLITICAL_PARTY_",   # Party-specific
+    "TAX_WORLDMAMMALS_",      # Specific fauna
+})
+
+
+def _is_generic_theme(theme: str) -> bool:
+    """P2-H6: Check if a theme is a generic wire-syndicated category.
+
+    Returns True ONLY if the theme matches an exact or narrow-prefix entry
+    in the generic list AND does NOT match a narrative-specific prefix.
+    """
+    if not theme:
+        return False
+    # Narrative-specific prefixes override the generic list
+    for prefix in _NARRATIVE_SPECIFIC_PREFIXES:
+        if theme.startswith(prefix):
+            return False
+    # Exact match or startswith a known generic theme
+    if theme in _GENERIC_THEME_EXACT_OR_PREFIX:
+        return True
+    for generic in _GENERIC_THEME_EXACT_OR_PREFIX:
+        if theme.startswith(generic + "_"):
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Verdicts
 # ---------------------------------------------------------------------------
 class Verdict(str, Enum):
@@ -217,6 +341,17 @@ def validate_deviation(
 
     red_team_flags: list[str] = []
 
+    # P2-H4: Cold start detection
+    # Days 1-6: baseline truly doesn't exist (or has <7 days of history).
+    # Days 7-20: baseline exists but is MEDIUM confidence at best.
+    # Day 21+: baseline is HIGH confidence, normal path.
+    is_cold_start = days_sampled < 7
+    is_warming_up = 7 <= days_sampled < 21
+
+    # Mark the claim_data with a cold_start flag so the frontend can show
+    # a "warming up" banner on countries in their first 3 weeks of data.
+    claim["cold_start"] = is_cold_start or is_warming_up
+
     # Low sample size: baseline unreliable
     if days_sampled < 14:
         red_team_flags.append(
@@ -245,7 +380,57 @@ def validate_deviation(
     # Quality of information: confidence label from baselines.py
     quality = {"LOW": 0.3, "MEDIUM": 0.65, "HIGH": 0.95}.get(confidence_label, 0.3)
 
-    # Verdict: extreme anomalies in low-confidence baselines get suppressed
+    # P2-H4: COLD START PATH
+    # During the first 7 days, the baseline doesn't exist at all. Previously
+    # this caused every extreme claim to get SUPPRESSED, making the globe look
+    # dead for a week. New behavior: publish with a prominent "warming up"
+    # caveat, don't suppress. Frontend will show a banner explaining the
+    # calibration period.
+    if is_cold_start:
+        return ValidationResult(
+            claim_type="DEVIATION",
+            claim_data=claim,
+            verdict=Verdict.PUBLISH_WITH_CAVEAT,
+            confidence=0.4,
+            quality_score=quality,
+            assumptions=assumptions,
+            red_team_flags=red_team_flags + [
+                "COLD START: baseline has fewer than 7 days of history"
+            ],
+            caveat=(
+                f"Calibrating baseline ({days_sampled}/7 days) — signals will "
+                "stabilize after one week of continuous data collection."
+            ),
+            verdict_reason=(
+                f"Cold start: {days_sampled} days of history. Publishing with "
+                "calibration caveat rather than suppressing (would make the "
+                "globe look dead for week 1)."
+            ),
+        )
+
+    # P2-H4: WARMING UP PATH (days 7-20)
+    # Baseline exists but is at MEDIUM confidence. Previously extreme levels
+    # here would publish with caveat — keep that but tag cold_start=True so
+    # frontend can show the calibration banner for first 3 weeks.
+    if is_warming_up and level in ("red", "deepBlue"):
+        return ValidationResult(
+            claim_type="DEVIATION",
+            claim_data=claim,
+            verdict=Verdict.PUBLISH_WITH_CAVEAT,
+            confidence=0.6,
+            quality_score=quality,
+            assumptions=assumptions,
+            red_team_flags=red_team_flags,
+            caveat=(
+                f"Baseline warming up ({days_sampled}/21 days) — "
+                "extreme anomaly claims need longer calibration period."
+            ),
+            verdict_reason="Warming up: extreme level with medium-confidence baseline",
+        )
+
+    # NORMAL PATH (days 21+): baseline is HIGH confidence.
+    # Suppress extreme levels only when confidence is actually LOW despite
+    # sufficient days (indicates sparse or flat baseline — real problem).
     if level in ("red", "deepBlue") and confidence_label == "LOW":
         return ValidationResult(
             claim_type="DEVIATION",
@@ -348,19 +533,14 @@ def _generate_coordination_hypotheses(
         "verdict": "CANNOT_RULE_OUT_IN_PHASE_A",
     })
 
-    # H4: Anniversary / recurring pattern
+    # H4: Anniversary / recurring pattern (P2-H5 fix: expanded anniversary list)
+    # Phase A is rule-based. Phase B will add lunar calendar (Eid, Chinese New
+    # Year, Tet) and country-specific observances computed from ephemeris.
     if event_date:
         try:
             dt = datetime.fromisoformat(event_date).date() if "T" in event_date else date.fromisoformat(event_date)
             month_day = (dt.month, dt.day)
-            anniversaries = {
-                (5, 9): "Victory Day (Russia, Belarus, NK) — annual narrative",
-                (10, 1): "National Day (China, NK) — annual narrative",
-                (2, 11): "Iranian Revolution Day — annual narrative",
-                (7, 1): "Hong Kong handover anniversary (China) — annual narrative",
-                (6, 4): "Tiananmen anniversary (China) — annual narrative",
-                (11, 7): "October Revolution anniversary (Russia) — annual narrative",
-            }
+            anniversaries = _ANNIVERSARY_DATES
             if month_day in anniversaries:
                 hypotheses.append({
                     "id": "H4_ANNIVERSARY_PATTERN",
@@ -430,14 +610,12 @@ def validate_coordination(event: dict[str, Any], context: dict[str, Any] | None 
             "world event reaction (H2), not coordination"
         )
 
-    # COORD-C2: No article dedup → flag if theme is generic
-    generic_themes = {
-        "CRISISLEX_", "NATURAL_DISASTER", "DISASTER", "WB_", "EPU_",
-        "TERROR", "ELECTION", "ECON_", "EARTHQUAKE", "FLOOD", "HURRICANE",
-    }
-    if any(theme.startswith(g) or g in theme for g in generic_themes):
+    # COORD-C2: No article dedup → flag if theme is generic (P2-H6 fix:
+    # use exact-match / narrow-prefix helper instead of broad substring match).
+    if _is_generic_theme(theme):
         red_team_flags.append(
-            f"Theme '{theme}' is generic — cannot distinguish from wire syndication (H3)"
+            f"Theme '{theme}' is a generic wire category — cannot distinguish "
+            "from wire syndication (H3)"
         )
 
     # Generate competing hypotheses
@@ -560,7 +738,11 @@ def validate_batch_classifications(
 def validate_batch_deviations(
     activity_rows: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[ValidationResult]]:
-    """Validate every country_activity row. Return (published_rows, all_results)."""
+    """Validate every country_activity row. Return (published_rows, all_results).
+
+    P2-H4: propagates cold_start flag from the ValidationResult onto the
+    country_activity row so the frontend can render the calibration banner.
+    """
     published: list[dict[str, Any]] = []
     results: list[ValidationResult] = []
     for row in activity_rows:
@@ -569,9 +751,13 @@ def validate_batch_deviations(
         vr = validate_deviation(country, audience, row)
         results.append(vr)
         if vr.should_publish:
+            merged = dict(row)
+            # Propagate cold_start flag onto the DB row (schema column exists)
+            if vr.claim_data.get("cold_start"):
+                merged["cold_start"] = True
             if vr.caveat:
-                row = {**row, "_caveat": vr.caveat}
-            published.append(row)
+                merged["_caveat"] = vr.caveat
+            published.append(merged)
     return published, results
 
 

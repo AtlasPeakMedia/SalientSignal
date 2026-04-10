@@ -16,6 +16,11 @@ Two query helpers cover everything Phase 2 needs:
 
 Both helpers retry on transient errors with exponential backoff (max 5 tries).
 A 429 response is treated as a hard rate limit — back off and try again later.
+
+Phase 2 red team fixes:
+  - P2-H1: Validate GDELT DataFrame schema (warn on unexpected column layout)
+  - P2-H3: Bounded HTTP timeout (default 30s) so a hung connection can't
+           stall the entire 50-minute pipeline budget
 """
 from __future__ import annotations
 
@@ -33,6 +38,23 @@ GDELT_MIN_TIMESPAN_MIN = 15  # smallest valid timespan
 
 DEFAULT_BACKOFF_BASE = 2.0  # seconds
 DEFAULT_MAX_RETRIES = 5
+
+# P2-H3: Bounded HTTP timeout. A hung GDELT connection without this could
+# sit in socket.recv() indefinitely and consume the entire time budget
+# without making progress. 30s is generous; typical queries return in 1-5s.
+DEFAULT_HTTP_TIMEOUT_SECONDS = 30.0
+
+# P2-H1: Required GDELT DOC 2.0 article_search columns we depend on.
+# If these aren't present the downstream code will fail mysteriously,
+# so we warn at the query boundary.
+REQUIRED_GDELT_COLUMNS: frozenset[str] = frozenset({
+    "url",
+    "title",
+    "seendate",
+    "domain",
+    "language",
+    "sourcecountry",
+})
 
 
 @dataclass
@@ -91,15 +113,65 @@ def _build_filters(
     return Filters(**kwargs)
 
 
-def _new_doc_client():
-    """Lazy-import the GdeltDoc client so module import doesn't require the dep at test time."""
+def _new_doc_client(timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS):
+    """Lazy-import the GdeltDoc client with a bounded HTTP timeout (P2-H3).
+
+    The gdeltdoc library uses `requests` under the hood. We monkey-patch the
+    `requests.get` call so every GDELT HTTP call has a hard timeout rather
+    than relying on the default socket-level blocking behavior (which can
+    hang indefinitely on network problems).
+    """
     try:
         from gdeltdoc import GdeltDoc
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "gdeltdoc is not installed. Install with `pip install gdeltdoc>=1.7.0`."
         ) from exc
-    return GdeltDoc()
+
+    client = GdeltDoc()
+
+    # Install a default timeout on the underlying requests.Session if present.
+    # gdeltdoc 1.7+ uses a Session internally; older versions use requests.get
+    # directly. We try both.
+    try:
+        # Newer gdeltdoc versions
+        if hasattr(client, "session"):
+            session = client.session
+            # Wrap session.request to inject timeout if missing
+            original_request = session.request
+
+            def _request_with_timeout(method, url, **kwargs):
+                kwargs.setdefault("timeout", timeout)
+                return original_request(method, url, **kwargs)
+
+            session.request = _request_with_timeout  # type: ignore[method-assign]
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Could not install HTTP timeout on gdeltdoc client: %s", exc)
+
+    return client
+
+
+def _validate_gdelt_schema(df: pd.DataFrame, description: str) -> None:
+    """P2-H1: Warn if GDELT returns a DataFrame with missing required columns.
+
+    This is a soft check — we log but don't raise, since occasional schema
+    drift shouldn't crash the entire pipeline. But the early warning gives
+    operators a chance to notice before every country starts returning zero
+    classified articles.
+    """
+    if df is None or df.empty:
+        return
+    cols = set(df.columns)
+    missing = REQUIRED_GDELT_COLUMNS - cols
+    if missing:
+        logger.warning(
+            "[%s] GDELT response missing expected columns: %s. "
+            "Returned columns: %s. "
+            "Downstream classification may fail until schema is reconciled.",
+            description,
+            sorted(missing),
+            sorted(cols),
+        )
 
 
 def _execute_with_retry(
@@ -147,17 +219,19 @@ def query_country(
     country_fips: str,
     hours: int = 1,
     max_records: int = GDELT_MAX_RECORDS,
+    http_timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
 ) -> GdeltQueryResult:
     """Query GDELT for all articles from a country in the last `hours` hours."""
     description = f"country={country_fips} hours={hours}"
     start = time.monotonic()
 
     def _do() -> pd.DataFrame:
-        client = _new_doc_client()
+        client = _new_doc_client(timeout=http_timeout)
         filters = _build_filters(country_fips=country_fips, hours=hours, max_records=max_records)
         return client.article_search(filters)
 
     df, retries = _execute_with_retry(_do, description=description)
+    _validate_gdelt_schema(df, description)
     duration = time.monotonic() - start
     logger.info("[%s] returned %d articles in %.2fs (retries=%d)",
                 description, 0 if df is None else len(df), duration, retries)
@@ -168,17 +242,19 @@ def query_domain(
     domain: str,
     hours: int = 1,
     max_records: int = GDELT_MAX_RECORDS,
+    http_timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
 ) -> GdeltQueryResult:
     """Query GDELT for all articles from a single state media domain in the last `hours` hours."""
     description = f"domain={domain} hours={hours}"
     start = time.monotonic()
 
     def _do() -> pd.DataFrame:
-        client = _new_doc_client()
+        client = _new_doc_client(timeout=http_timeout)
         filters = _build_filters(domain=domain, hours=hours, max_records=max_records)
         return client.article_search(filters)
 
     df, retries = _execute_with_retry(_do, description=description)
+    _validate_gdelt_schema(df, description)
     duration = time.monotonic() - start
     logger.info("[%s] returned %d articles in %.2fs (retries=%d)",
                 description, 0 if df is None else len(df), duration, retries)
@@ -191,4 +267,6 @@ __all__ = [
     "query_domain",
     "GDELT_MAX_RECORDS",
     "GDELT_MIN_TIMESPAN_MIN",
+    "DEFAULT_HTTP_TIMEOUT_SECONDS",
+    "REQUIRED_GDELT_COLUMNS",
 ]

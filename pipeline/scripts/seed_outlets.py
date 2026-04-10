@@ -11,6 +11,9 @@ Usage:
 
     # Dry run — print rows but don't write
     python scripts/seed_outlets.py --dry-run
+
+Phase 2 fixes:
+  - P2-C7: Loads pipeline/.env via python-dotenv BEFORE reading env vars
 """
 from __future__ import annotations
 
@@ -22,6 +25,40 @@ from pathlib import Path
 THIS_DIR = Path(__file__).resolve().parent
 PIPELINE_DIR = THIS_DIR.parent
 sys.path.insert(0, str(PIPELINE_DIR))
+
+
+def _load_env() -> None:
+    """Load pipeline/.env via python-dotenv BEFORE any other imports.
+
+    P2-C7 fix: previously env vars were only checked at first DB call,
+    30+ minutes into the run. Now we load .env at script start so credentials
+    are validated upfront.
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        # python-dotenv is a dependency in pyproject.toml, but if someone
+        # runs the script without installing the package, fall back to
+        # assuming env vars are already set in the shell.
+        print(
+            "WARNING: python-dotenv not installed. Reading env vars from shell only.",
+            file=sys.stderr,
+        )
+        return
+
+    env_path = PIPELINE_DIR / ".env"
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
+        print(f"[seed] Loaded environment from {env_path}", file=sys.stderr)
+    else:
+        print(
+            f"[seed] No .env file at {env_path} "
+            "(using shell environment only)",
+            file=sys.stderr,
+        )
+
+
+_load_env()
 
 from src.db import make_db  # noqa: E402
 from src.outlets import get_all_outlets  # noqa: E402

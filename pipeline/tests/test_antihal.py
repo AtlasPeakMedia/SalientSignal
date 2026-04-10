@@ -85,17 +85,24 @@ class TestDeviationValidation:
         assert r.verdict == Verdict.PUBLISH
 
     def test_low_confidence_extreme_suppresses(self):
-        """Red with only 5 days of history → should SUPPRESS."""
+        """Red with LOW confidence AFTER cold start → should SUPPRESS.
+
+        P2-H4 change: the cold start path (days_sampled < 7) publishes instead
+        of suppressing. The stable path still suppresses extreme claims with
+        LOW confidence, so we use days_sampled=25 here to reach the stable path
+        with a (contradictory but valid-for-testing) LOW confidence label.
+        """
         r = validate_deviation(
             "VE", "DOMESTIC",
-            self._deviation(confidence="LOW", days_sampled=5, level="red"),
+            self._deviation(confidence="LOW", days_sampled=25, level="red"),
         )
         assert r.verdict == Verdict.SUPPRESS
 
     def test_low_confidence_extreme_silence_suppresses(self):
+        """P2-H4: test the stable path, not cold start."""
         r = validate_deviation(
             "KP", "INTERNATIONAL",
-            self._deviation(confidence="LOW", days_sampled=4, level="deepBlue",
+            self._deviation(confidence="LOW", days_sampled=25, level="deepBlue",
                             today_count=0, ratio=0.0, z_score=-3.0),
         )
         assert r.verdict == Verdict.SUPPRESS

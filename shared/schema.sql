@@ -1,8 +1,29 @@
--- SalientSignal — Supabase database schema (MVP subset)
+-- SalientSignal — Supabase database schema (Phase 2 hardened)
 -- Source: SalientSignal-Algorithms.md "Database Schema (Core Tables)"
--- Constraint: Free tier (Supabase 500 MB) — purge articles >30 days, snapshots forever.
+-- Constraint: Free tier (Supabase 500 MB) — purge articles >30 days manually.
 --
--- To apply: paste into Supabase SQL Editor, run.
+-- Phase 2 red team fixes applied (from proud-jumping-key.md Phase 2 Deep Plan):
+--   P2-C8: DISABLE ROW LEVEL SECURITY on all tables (prevents silent write failures)
+--   P2-C9: schema_version table + pre-flight check
+--   P2-C4: analysis_escalated table (ESCALATE claims no longer silently dropped)
+--   P2-H7: DROP started_at_monotonic (useless process-local clock)
+--   P2-H8: TEXT column size constraints (prevent DoS via malformed GDELT article)
+--   Drop useless implicit unique index on articles.url → explicit named index
+--
+-- To apply: paste into Supabase SQL Editor, run. Safe to re-run (all IF NOT EXISTS).
+
+------------------------------------------------------------------
+-- 0. Schema version table (used by pipeline pre-flight check)
+------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS schema_version (
+    version             INT PRIMARY KEY,
+    applied_at          TIMESTAMPTZ DEFAULT NOW(),
+    notes               TEXT
+);
+-- Phase 2 schema = version 2. Phase 1 was version 1 (informal, never shipped).
+INSERT INTO schema_version (version, notes)
+VALUES (2, 'Phase 2: RLS disabled, escalation table, size constraints, batched upserts')
+ON CONFLICT (version) DO NOTHING;
 
 ------------------------------------------------------------------
 -- 1. Source classification (seeded from outlets.json by seed_outlets.py)
@@ -16,37 +37,56 @@ CREATE TABLE IF NOT EXISTS outlet_classification (
     languages           TEXT[],                          -- ISO 639-1 codes
     is_state_owned      BOOLEAN DEFAULT FALSE,
     is_state_aligned    BOOLEAN DEFAULT FALSE,
-    confidence          FLOAT DEFAULT 1.0,
+    confidence          DOUBLE PRECISION DEFAULT 1.0,
     notes               TEXT,
     created_at          TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT outlet_audience_check
-        CHECK (audience_type IN ('DOMESTIC', 'INTERNATIONAL', 'DIASPORA'))
+        CHECK (audience_type IN ('DOMESTIC', 'INTERNATIONAL', 'DIASPORA')),
+    CONSTRAINT outlet_name_size
+        CHECK (octet_length(outlet_name) <= 1024),
+    CONSTRAINT outlet_notes_size
+        CHECK (notes IS NULL OR octet_length(notes) <= 4096),
+    CONSTRAINT outlet_domain_size
+        CHECK (octet_length(domain) <= 253)              -- max DNS name length
 );
 CREATE INDEX IF NOT EXISTS idx_outlets_country ON outlet_classification(country);
 CREATE INDEX IF NOT EXISTS idx_outlets_audience ON outlet_classification(audience_type);
+ALTER TABLE outlet_classification DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 2. Articles (rolling 30 days, GDELT-sourced)
+--    Note: url uniqueness is enforced via explicit named index
+--    (P2-H: make the uniqueness contract explicit so it survives migrations)
 ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS articles (
     id                  BIGSERIAL PRIMARY KEY,
-    url                 TEXT NOT NULL UNIQUE,
+    url                 TEXT NOT NULL,
     title_original      TEXT,
     source_domain       TEXT NOT NULL,
     source_country      CHAR(2) NOT NULL,                -- ISO 3166-1 alpha-2
     source_language     CHAR(2),                         -- ISO 639-1 (kept short to match GDELT)
     audience_type       TEXT NOT NULL,
-    audience_confidence FLOAT,
-    tone                FLOAT,                           -- GDELT tone score, -10..+10
+    audience_confidence DOUBLE PRECISION,
+    tone                DOUBLE PRECISION,                -- GDELT tone score, -10..+10
     pub_date            TIMESTAMPTZ NOT NULL,
     ingested_at         TIMESTAMPTZ DEFAULT NOW(),
     gdelt_themes        TEXT[],                          -- GDELT theme codes
     CONSTRAINT articles_audience_check
-        CHECK (audience_type IN ('DOMESTIC', 'INTERNATIONAL', 'DIASPORA'))
+        CHECK (audience_type IN ('DOMESTIC', 'INTERNATIONAL', 'DIASPORA')),
+    -- P2-H8: Prevent DoS via malformed GDELT article with huge title
+    CONSTRAINT articles_title_size
+        CHECK (title_original IS NULL OR octet_length(title_original) <= 65536),
+    CONSTRAINT articles_url_size
+        CHECK (octet_length(url) <= 8192)
 );
-CREATE INDEX IF NOT EXISTS idx_articles_country_date ON articles(source_country, pub_date);
-CREATE INDEX IF NOT EXISTS idx_articles_audience_date ON articles(audience_type, pub_date);
+-- Explicit unique index on url (survives migrations, documents intent)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_url_unique ON articles(url);
+CREATE INDEX IF NOT EXISTS idx_articles_country_date ON articles(source_country, pub_date DESC);
+-- P2-H4: composite index for daily_article_counts() query (WHERE country AND audience_type AND pub_date BETWEEN)
+CREATE INDEX IF NOT EXISTS idx_articles_src_aud_date
+    ON articles(source_country, audience_type, pub_date DESC);
 CREATE INDEX IF NOT EXISTS idx_articles_domain ON articles(source_domain);
+ALTER TABLE articles DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 3. Country activity (one row per country/date/audience_type — drives globe)
@@ -56,12 +96,14 @@ CREATE TABLE IF NOT EXISTS country_activity (
     date                DATE NOT NULL,
     audience_type       TEXT NOT NULL,
     today_count         INT NOT NULL DEFAULT 0,
-    baseline_mean       FLOAT,                           -- 30-day mean
-    baseline_std        FLOAT,                           -- 30-day std dev
-    deviation_ratio     FLOAT,                           -- today / baseline_mean
-    z_score             FLOAT,                           -- (today - mean) / std
+    baseline_mean       DOUBLE PRECISION,                -- 30-day mean
+    baseline_std        DOUBLE PRECISION,                -- 30-day std dev
+    deviation_ratio     DOUBLE PRECISION,                -- today / baseline_mean
+    z_score             DOUBLE PRECISION,                -- (today - mean) / std
     level               TEXT,                            -- deepBlue|steelBlue|coolGray|neutral|amber|orange|red
     confidence          TEXT,                            -- LOW | MEDIUM | HIGH
+    -- P2-H4: Cold start indicator for frontend "warming up" banner
+    cold_start          BOOLEAN DEFAULT FALSE,
     top_themes          JSONB,                           -- {theme_code: count}
     top_outlets         JSONB,                           -- [{domain, count}]
     updated_at          TIMESTAMPTZ DEFAULT NOW(),
@@ -69,23 +111,28 @@ CREATE TABLE IF NOT EXISTS country_activity (
     CONSTRAINT country_activity_audience_check
         CHECK (audience_type IN ('DOMESTIC', 'INTERNATIONAL', 'DIASPORA'))
 );
-CREATE INDEX IF NOT EXISTS idx_country_activity_date ON country_activity(date);
+CREATE INDEX IF NOT EXISTS idx_country_activity_date ON country_activity(date DESC);
+ALTER TABLE country_activity DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 4. Coordination events (cross-country narrative coordination)
+--    Only PUBLISH + PUBLISH_WITH_CAVEAT events land here.
+--    ESCALATE events go to analysis_escalated (below).
 ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS coordination_events (
-    id                  SERIAL PRIMARY KEY,
+    id                  BIGSERIAL PRIMARY KEY,
     detected_at         TIMESTAMPTZ DEFAULT NOW(),
     date                DATE NOT NULL,
     theme               TEXT NOT NULL,
     countries           TEXT[] NOT NULL,                 -- ISO 3166-1 alpha-2 codes
-    coordination_score  FLOAT NOT NULL,                  -- 0.0 - 1.0
+    coordination_score  DOUBLE PRECISION NOT NULL,       -- 0.0 - 1.0
     time_window_hours   INT DEFAULT 24,
+    caveat              TEXT,                            -- hedge language if PUBLISH_WITH_CAVEAT
     details             JSONB                            -- per-country counts, ratios
 );
-CREATE INDEX IF NOT EXISTS idx_coordination_date ON coordination_events(date);
+CREATE INDEX IF NOT EXISTS idx_coordination_date ON coordination_events(date DESC);
 CREATE INDEX IF NOT EXISTS idx_coordination_theme ON coordination_events(theme);
+ALTER TABLE coordination_events DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 5. Daily snapshots (kept forever, tiny footprint, drives historical view)
@@ -100,45 +147,61 @@ CREATE TABLE IF NOT EXISTS daily_snapshots (
     silences            JSONB,                           -- countries below baseline
     created_at          TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE daily_snapshots DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 6. Pipeline runs (health monitoring — drives "last updated" banner)
+--    P2-H7: Dropped started_at_monotonic (useless process-local clock)
 ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS pipeline_runs (
     id                  BIGSERIAL PRIMARY KEY,
-    started_at_monotonic DOUBLE PRECISION,                -- process-local start timestamp
     started_at_utc      TIMESTAMPTZ NOT NULL,
     elapsed_seconds     DOUBLE PRECISION,
-    stats               JSONB,                            -- PipelineStats.to_dict()
-    outcome             TEXT DEFAULT 'SUCCESS',           -- SUCCESS | PARTIAL | FAILED
+    stats               JSONB,                           -- PipelineStats.to_dict()
+    outcome             TEXT DEFAULT 'SUCCESS',          -- SUCCESS | PARTIAL | FAILED
     error_message       TEXT,
-    created_at          TIMESTAMPTZ DEFAULT NOW()
+    created_at          TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT pipeline_outcome_check
+        CHECK (outcome IN ('SUCCESS', 'PARTIAL', 'FAILED')),
+    CONSTRAINT pipeline_error_size
+        CHECK (error_message IS NULL OR octet_length(error_message) <= 8192)
 );
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started ON pipeline_runs(started_at_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_outcome ON pipeline_runs(outcome);
+ALTER TABLE pipeline_runs DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 7. Analysis claims — every claim the pipeline makes, tagged with verdict
 --    from the Anti-Hallucination Agent (SAT-based validation layer)
+--    P2-C5: pipeline now actually persists here (was silently discarded)
 ------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS analysis_claims (
     id                  BIGSERIAL PRIMARY KEY,
-    claim_type          TEXT NOT NULL,                    -- CLASSIFICATION | DEVIATION | COORDINATION | AI_TEXT
-    claim_data          JSONB NOT NULL,                   -- the claim itself (country, theme, audience, etc.)
-    source_refs         JSONB,                            -- which articles/outputs were the evidence
-    quality_score       FLOAT,                            -- Quality of Information Check score (0.0-1.0)
-    competing_hypotheses JSONB,                           -- ACH: alternative explanations
-    assumptions         JSONB,                            -- Key Assumptions Check output
-    red_team_flags      JSONB,                            -- Red team: how could this be wrong?
-    verdict             TEXT NOT NULL,                    -- PUBLISH | PUBLISH_WITH_CAVEAT | SUPPRESS | ESCALATE
+    claim_type          TEXT NOT NULL,                   -- CLASSIFICATION | DEVIATION | COORDINATION | AI_TEXT
+    claim_data          JSONB NOT NULL,                  -- the claim itself
+    source_refs         JSONB,                           -- which articles/outputs were the evidence
+    quality_score       DOUBLE PRECISION,                -- Quality of Information Check score (0.0-1.0)
+    competing_hypotheses JSONB,                          -- ACH: alternative explanations
+    assumptions         JSONB,                           -- Key Assumptions Check output
+    red_team_flags      JSONB,                           -- Red team: how could this be wrong?
+    verdict             TEXT NOT NULL,                   -- PUBLISH | PUBLISH_WITH_CAVEAT | SUPPRESS | ESCALATE
     verdict_reason      TEXT,
-    confidence          FLOAT,                            -- final confidence after validation
+    confidence          DOUBLE PRECISION,                -- final confidence after validation
     created_at          TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT analysis_verdict_check
-        CHECK (verdict IN ('PUBLISH', 'PUBLISH_WITH_CAVEAT', 'SUPPRESS', 'ESCALATE'))
+        CHECK (verdict IN ('PUBLISH', 'PUBLISH_WITH_CAVEAT', 'SUPPRESS', 'ESCALATE')),
+    -- Size constraints to prevent runaway JSONB (anti-hal metadata can be large)
+    CONSTRAINT claims_claim_data_size
+        CHECK (octet_length(claim_data::text) <= 16384),
+    CONSTRAINT claims_hypotheses_size
+        CHECK (competing_hypotheses IS NULL OR octet_length(competing_hypotheses::text) <= 32768),
+    CONSTRAINT claims_verdict_reason_size
+        CHECK (verdict_reason IS NULL OR octet_length(verdict_reason) <= 4096)
 );
 CREATE INDEX IF NOT EXISTS idx_claims_type ON analysis_claims(claim_type);
 CREATE INDEX IF NOT EXISTS idx_claims_verdict ON analysis_claims(verdict);
 CREATE INDEX IF NOT EXISTS idx_claims_created ON analysis_claims(created_at DESC);
+ALTER TABLE analysis_claims DISABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 8. Suppressed claims audit (claims the anti-hal agent killed)
@@ -147,12 +210,55 @@ CREATE INDEX IF NOT EXISTS idx_claims_created ON analysis_claims(created_at DESC
 CREATE TABLE IF NOT EXISTS analysis_suppressed (
     id                  BIGSERIAL PRIMARY KEY,
     claim_id            BIGINT REFERENCES analysis_claims(id) ON DELETE CASCADE,
-    suppression_reason  TEXT NOT NULL,                    -- which SAT killed it + why
-    manual_review_status TEXT DEFAULT 'PENDING',          -- PENDING | OVERRIDE_PUBLISH | CONFIRMED_SUPPRESS
+    suppression_reason  TEXT NOT NULL,                   -- which SAT killed it + why
+    manual_review_status TEXT DEFAULT 'PENDING',         -- PENDING | OVERRIDE_PUBLISH | CONFIRMED_SUPPRESS
     reviewer_notes      TEXT,
     reviewed_at         TIMESTAMPTZ,
     created_at          TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT suppressed_review_status_check
-        CHECK (manual_review_status IN ('PENDING', 'OVERRIDE_PUBLISH', 'CONFIRMED_SUPPRESS'))
+        CHECK (manual_review_status IN ('PENDING', 'OVERRIDE_PUBLISH', 'CONFIRMED_SUPPRESS')),
+    CONSTRAINT suppressed_reason_size
+        CHECK (octet_length(suppression_reason) <= 4096)
 );
 CREATE INDEX IF NOT EXISTS idx_suppressed_status ON analysis_suppressed(manual_review_status);
+ALTER TABLE analysis_suppressed DISABLE ROW LEVEL SECURITY;
+
+------------------------------------------------------------------
+-- 9. Analysis escalated (CRITICAL addition — P2-C4)
+--    High-impact claims flagged for human review.
+--    Previously these were silently dropped by validate_batch_*.
+--    This table is the queue the frontend/email digest will read from.
+------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS analysis_escalated (
+    id                  BIGSERIAL PRIMARY KEY,
+    claim_id            BIGINT REFERENCES analysis_claims(id) ON DELETE CASCADE,
+    claim_type          TEXT NOT NULL,                   -- CLASSIFICATION | DEVIATION | COORDINATION | AI_TEXT
+    escalation_reason   TEXT NOT NULL,
+    severity            TEXT DEFAULT 'HIGH',             -- LOW | MEDIUM | HIGH | URGENT
+    review_status       TEXT DEFAULT 'PENDING',          -- PENDING | CONFIRMED | REJECTED | STALE
+    reviewer_notes      TEXT,
+    reviewed_at         TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT escalated_severity_check
+        CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH', 'URGENT')),
+    CONSTRAINT escalated_review_status_check
+        CHECK (review_status IN ('PENDING', 'CONFIRMED', 'REJECTED', 'STALE')),
+    CONSTRAINT escalated_reason_size
+        CHECK (octet_length(escalation_reason) <= 4096)
+);
+CREATE INDEX IF NOT EXISTS idx_escalated_status ON analysis_escalated(review_status);
+CREATE INDEX IF NOT EXISTS idx_escalated_created ON analysis_escalated(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_escalated_severity ON analysis_escalated(severity);
+ALTER TABLE analysis_escalated DISABLE ROW LEVEL SECURITY;
+
+------------------------------------------------------------------
+-- Final check: record that schema was applied successfully
+------------------------------------------------------------------
+-- This INSERT will error if the schema_version table wasn't created,
+-- which is a useful early signal of schema corruption.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM schema_version WHERE version = 2) THEN
+        RAISE EXCEPTION 'Schema version 2 not recorded — schema_version table missing or broken';
+    END IF;
+END $$;

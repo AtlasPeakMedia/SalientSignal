@@ -188,6 +188,83 @@ def _normalize_pub_date(value: Any) -> str:
     return s
 
 
+def _persist_validation_batch(
+    db: Any,
+    validations: list[Any],  # list[ValidationResult]
+    dry_run: bool,
+    *,
+    only_non_publish: bool = False,
+) -> None:
+    """Persist Anti-Hal validation results to analysis_claims + analysis_escalated.
+
+    P2-C4/C5 fix: previously the validate_batch_* functions computed rich
+    ValidationResult metadata (hypotheses, assumptions, red team flags) and
+    THREW IT AWAY. Now every claim lands in analysis_claims for audit, and
+    every ESCALATE verdict lands in analysis_escalated for human review.
+
+    Args:
+        only_non_publish: if True, only persist claims with verdict != PUBLISH.
+            Used for high-volume CLASSIFICATION claims (~5K per run) where
+            PUBLISH rows would blow out the free tier storage for low audit value.
+
+    Failures are logged but don't crash the pipeline — the audit trail is
+    best-effort and shouldn't take down the whole run.
+    """
+    if dry_run or not validations:
+        return
+
+    to_persist = validations
+    if only_non_publish:
+        to_persist = [v for v in validations if v.verdict != Verdict.PUBLISH]
+
+    if not to_persist:
+        return
+
+    # Convert ValidationResults to analysis_claims row shapes
+    claim_rows: list[dict[str, Any]] = []
+    for vr in to_persist:
+        claim_rows.append({
+            "claim_type": vr.claim_type,
+            "claim_data": vr.claim_data,
+            "quality_score": round(vr.quality_score, 3),
+            "competing_hypotheses": vr.competing_hypotheses or None,
+            "assumptions": vr.assumptions or None,
+            "red_team_flags": vr.red_team_flags or None,
+            "verdict": vr.verdict.value,
+            "verdict_reason": (vr.verdict_reason or "")[:4096] or None,
+            "confidence": round(vr.confidence, 3),
+        })
+
+    if hasattr(db, "insert_analysis_claims"):
+        try:
+            db.insert_analysis_claims(claim_rows)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("insert_analysis_claims failed (continuing): %s", exc)
+
+    # Escalations: one insert per ESCALATE verdict.
+    # 4+ country coordination events are URGENT severity.
+    if hasattr(db, "insert_analysis_escalated"):
+        for vr in to_persist:
+            if vr.verdict != Verdict.ESCALATE:
+                continue
+            severity = "HIGH"
+            if vr.claim_type == "COORDINATION":
+                countries = vr.claim_data.get("countries", [])
+                if isinstance(countries, list) and len(countries) >= 4:
+                    severity = "URGENT"
+            try:
+                db.insert_analysis_escalated(
+                    claim_id=None,  # Phase B will wire up returned IDs
+                    claim_type=vr.claim_type,
+                    escalation_reason=(
+                        vr.verdict_reason or "High-impact claim requires human review"
+                    ),
+                    severity=severity,
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("insert_analysis_escalated failed: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # Main entrypoint
 # ---------------------------------------------------------------------------
@@ -241,7 +318,29 @@ def run_pipeline(
     if db is None:
         db = make_db(dry_run=dry_run)
 
-    # 2a. PIPE-C2: storage quota pre-flight check (real Supabase only)
+    # 2a. P2-C9: schema version pre-flight check (real Supabase only).
+    # Fail fast if the DB hasn't had the latest shared/schema.sql applied,
+    # rather than 30 minutes into the run.
+    if not dry_run and hasattr(db, "get_schema_version"):
+        try:
+            from .db import REQUIRED_SCHEMA_VERSION
+            version = db.get_schema_version()
+            if version < REQUIRED_SCHEMA_VERSION:
+                raise PipelineError(
+                    f"Schema version {version} is too old "
+                    f"(pipeline requires >= {REQUIRED_SCHEMA_VERSION}). "
+                    f"Re-run shared/schema.sql in the Supabase SQL Editor."
+                )
+            logger.info(
+                "Schema version %d meets minimum %d",
+                version, REQUIRED_SCHEMA_VERSION,
+            )
+        except PipelineError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Schema version probe failed: %s", exc)
+
+    # 2b. PIPE-C2: storage quota pre-flight check (real Supabase only)
     if not dry_run and hasattr(db, "check_storage_quota"):
         try:
             used_bytes, used_fraction = db.check_storage_quota()
@@ -368,6 +467,11 @@ def run_pipeline(
             f"low-confidence classifications"
         )
 
+    # P2-C5: persist non-PUBLISH classification claims to analysis_claims.
+    # PUBLISH classifications are high-volume and low audit value, skip to
+    # keep storage usage reasonable on the 500 MB free tier.
+    _persist_validation_batch(db, class_validations, dry_run, only_non_publish=True)
+
     # 5. Insert articles (PIPE-C1: fail-fast instead of log-and-continue)
     if dry_run:
         print(f"DRY RUN: would insert {len(article_rows)} article rows into Supabase")
@@ -419,8 +523,12 @@ def run_pipeline(
             "z_score": deviation.z_score,
             "level": deviation.level,
             "confidence": deviation.confidence,
+            "cold_start": False,  # anti-hal may flip this to True
             "top_themes": dict(top_themes_sorted),
             "top_outlets": [{"domain": d, "count": c} for d, c in top_outlets],
+            # Internal-only: consumed by validate_deviation for cold start detection,
+            # stripped before DB write (not a schema column).
+            "days_sampled": deviation.days_sampled,
         }
         activity_rows.append(row)
         result.country_activity.append(row)
@@ -455,31 +563,43 @@ def run_pipeline(
     # Rebuild result.country_activity from the validated rows
     result.country_activity = list(activity_rows)
 
+    # P2-C5: persist all deviation claims (low volume, high audit value)
+    _persist_validation_batch(db, dev_validations, dry_run)
+
+    # Strip internal-only fields before DB write:
+    # - anything _-prefixed (anti-hal caveats, etc.)
+    # - days_sampled (not a schema column; used only by the validator)
+    _INTERNAL_ACTIVITY_FIELDS = {"days_sampled"}
+    db_activity_rows = [
+        {
+            k: v for k, v in row.items()
+            if not k.startswith("_") and k not in _INTERNAL_ACTIVITY_FIELDS
+        }
+        for row in activity_rows
+    ]
+
     if dry_run:
-        print(f"DRY RUN: would upsert {len(activity_rows)} rows to country_activity")
+        print(f"DRY RUN: would upsert {len(db_activity_rows)} rows to country_activity")
     else:
         _check_time_budget(started_at, time_budget_seconds, phase="upsert_country_activity")
-        # PIPE-C1: accumulate failures and raise at the end so partial success
-        # doesn't leave the system in a half-written state.
-        failed_upserts: list[tuple[str, str, str]] = []
-        for row in activity_rows:
-            try:
-                db.upsert_country_activity(row)
-                stats.country_activity_rows += 1
-            except Exception as exc:  # noqa: BLE001
-                failed_upserts.append(
-                    (str(row.get("country", "?")),
-                     str(row.get("audience_type", "?")),
-                     str(exc))
+        # P2-C2: batch upsert instead of 500+ individual API calls.
+        # PIPE-C1: fail-fast on any error — partial success leaves state corrupt.
+        try:
+            inserted = db.upsert_country_activity_batch(db_activity_rows)
+            stats.country_activity_rows = inserted
+            if db_activity_rows and inserted == 0:
+                raise PipelineError(
+                    f"upsert_country_activity_batch returned 0 for "
+                    f"{len(db_activity_rows)} rows — Supabase may be rejecting writes."
                 )
-                logger.error("Failed to upsert country_activity %s/%s: %s",
-                             row.get("country"), row.get("audience_type"), exc)
-        if failed_upserts:
+        except PipelineError:
+            raise
+        except Exception as exc:
+            logger.error("Failed to batch upsert country_activity: %s", exc)
             raise PipelineError(
-                f"country_activity upsert failed for {len(failed_upserts)} of "
-                f"{len(activity_rows)} rows. First failure: "
-                f"{failed_upserts[0][0]}/{failed_upserts[0][1]}: {failed_upserts[0][2]}"
-            )
+                f"country_activity batch upsert failed for "
+                f"{len(db_activity_rows)} rows: {exc}"
+            ) from exc
     print(f"Calculated baselines for {stats.baselines_calculated} (country, audience) pairs")
     print(f"Computed deviations for {len(activity_rows)} (country, audience) pairs")
 
@@ -515,16 +635,25 @@ def run_pipeline(
             f"coordination events (of {len(raw_coord_rows)} detected)"
         )
 
+    # P2-C4/C5: persist ALL coordination claims (publish + suppress + escalate)
+    # Coordination events are low volume and high audit value — keep them all.
+    _persist_validation_batch(db, coord_validations, dry_run)
+
     failed_coord_writes: list[tuple[str, str]] = []
     for ev_row in validated_coord_rows:
-        result.coordination_events.append(ev_row)
+        # Strip anti-hal internal fields before DB write
+        clean_row = {k: v for k, v in ev_row.items() if not k.startswith("_")}
+        result.coordination_events.append(clean_row)
         if dry_run:
             continue
         try:
-            db.insert_coordination_event(ev_row)
+            db.insert_coordination_event(clean_row)
         except Exception as exc:  # noqa: BLE001
-            failed_coord_writes.append((ev_row.get("theme", "?"), str(exc)))
-            logger.error("Failed to insert coordination event %s: %s", ev_row.get("theme"), exc)
+            failed_coord_writes.append((clean_row.get("theme", "?"), str(exc)))
+            logger.error(
+                "Failed to insert coordination event %s: %s",
+                clean_row.get("theme"), exc,
+            )
 
     # Coordination failures are non-fatal (coordination is best-effort; a failure
     # here doesn't corrupt anything downstream) but still get logged loudly.

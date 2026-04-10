@@ -75,17 +75,65 @@ class OutletRecord:
 
 
 def _normalize_domain(domain: str) -> str:
-    """Lowercase, strip whitespace, drop leading 'www.' / protocol fragments."""
+    """Extract and normalize the canonical hostname from any URL-like input.
+
+    P2-C3 red team fix — handles all the real-world formats GDELT returns:
+      - https://rt.com/article/123 → rt.com
+      - http://www.rt.com/ → rt.com
+      - m.rt.com → m.rt.com (mobile subdomain; parent walk-up catches it)
+      - rt.com:443 → rt.com (strips port)
+      - rt.com. → rt.com (strips trailing DNS dot)
+      - rt.com?utm_source=foo → rt.com (strips query string)
+      - news.google.com/rss/articles/... → news.google.com (stops at host)
+      - "  RT.COM  " → rt.com (trims + lowercases)
+      - bare host like "tass.ru" → tass.ru (passthrough)
+
+    Known limitations:
+      - Google News redirect URLs (news.google.com/rss/...) will normalize to
+        news.google.com, not the underlying source. There's no way to unwrap
+        these without fetching the URL. Handle at outlet classification stage.
+      - Shortened URLs (bit.ly, t.co) can't be unwrapped here either.
+    """
     if not domain:
         return ""
-    d = domain.lower().strip()
-    if d.startswith(("http://", "https://")):
+
+    d = domain.strip().lower()
+    if not d:
+        return ""
+
+    # Strip scheme if present
+    if "://" in d:
         d = d.split("://", 1)[1]
+
+    # Strip userinfo (user:pass@host)
+    if "@" in d:
+        # Only split on @ if it comes before the first / (otherwise it's in a path)
+        slash_pos = d.find("/")
+        at_pos = d.find("@")
+        if slash_pos == -1 or at_pos < slash_pos:
+            d = d.split("@", 1)[1]
+
+    # Strip everything after the first path separator
+    for sep in ("/", "?", "#"):
+        if sep in d:
+            d = d.split(sep, 1)[0]
+
+    # Strip port number
+    if ":" in d:
+        d = d.split(":", 1)[0]
+
+    # Strip leading/trailing dots (DNS allows trailing dot, but our DB doesn't)
+    d = d.strip(".")
+
+    # Strip www. prefix (canonicalize)
     if d.startswith("www."):
         d = d[4:]
-    # strip trailing slashes / paths beyond the host (we keep path-style entries
-    # like "tass.com/en" intact when present in the database — see lookup logic)
-    return d.rstrip("/")
+
+    # Collapse consecutive dots (malformed input protection)
+    while ".." in d:
+        d = d.replace("..", ".")
+
+    return d
 
 
 @lru_cache(maxsize=1)
@@ -134,8 +182,13 @@ def load_outlets(path: Path | None = None) -> dict[str, OutletRecord]:
 def get_outlet(domain: str) -> OutletRecord | None:
     """Look up an outlet by domain. Returns None if not in the database.
 
-    Tries the normalized domain first; if that fails it walks parent domains
-    (e.g. "english.cgtn.com/news/2026" -> "english.cgtn.com" -> "cgtn.com").
+    Tries the normalized hostname first, then walks UP the subdomain chain
+    so that "m.rt.com", "english.cgtn.com", "arabic.rt.com" all resolve to
+    their parent outlet when the parent is registered.
+
+    P2-C3 fix: _normalize_domain now extracts the bare hostname before this
+    function sees it, so the lookup no longer has to deal with paths,
+    query strings, ports, etc.
     """
     if not domain:
         return None
@@ -144,17 +197,12 @@ def get_outlet(domain: str) -> OutletRecord | None:
     if not normalized:
         return None
 
-    # Try the full normalized form first.
+    # Try the full normalized hostname first (most specific match wins).
     if normalized in db:
         return db[normalized]
 
-    # Walk down to the host (drop path components).
-    host = normalized.split("/", 1)[0]
-    if host in db:
-        return db[host]
-
-    # Walk up the subdomain chain.
-    parts = host.split(".")
+    # Walk up the subdomain chain: "m.rt.com" → "rt.com"
+    parts = normalized.split(".")
     while len(parts) > 2:
         parts.pop(0)
         candidate = ".".join(parts)
