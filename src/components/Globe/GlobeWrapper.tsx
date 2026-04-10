@@ -87,9 +87,12 @@ function getCountryColor(
   viewMode: ViewMode,
   activityByIso: Map<string, CountryActivity>,
 ): string {
-  if (!isoA2) return "#1A1D24";
+  // Fallbacks use getColorForLevel("neutral") so there's a single source
+  // of truth — if the neutral deviation color changes in colors.ts, the
+  // unmonitored country fill stays in sync automatically.
+  if (!isoA2) return getColorForLevel("neutral");
   const activity = activityByIso.get(isoA2);
-  if (!activity) return "#1A1D24"; // Unmonitored country = neutral
+  if (!activity) return getColorForLevel("neutral"); // Unmonitored country = neutral
 
   let level: DeviationLevel;
   if (viewMode === "DOMESTIC") {
@@ -115,6 +118,15 @@ export default function GlobeWrapper({
   const [geoData, setGeoData] = useState<GeoJson | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
+  // Track which country the cursor is currently over. Drives altitude lift,
+  // fill color swap, and border glow on hover.
+  const [hoveredIso, setHoveredIso] = useState<string | null>(null);
+
+  // Respect prefers-reduced-motion for the polygon altitude animation.
+  // react-globe.gl's THREE.js tweens don't auto-respect this OS-level
+  // preference, so we manually gate polygonsTransitionDuration on it.
+  const [reducedMotion, setReducedMotion] = useState(false);
+
   // Memoize the ISO lookup map so we don't rebuild it on every render.
   const activityByIso = useMemo(
     () => new Map<string, CountryActivity>(countryActivity.map((c) => [c.iso2, c])),
@@ -128,6 +140,15 @@ export default function GlobeWrapper({
       .catch(() => {
         console.warn("Country boundaries not loaded. Run scripts/fetch-geojson.sh");
       });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   useEffect(() => {
@@ -190,22 +211,43 @@ export default function GlobeWrapper({
         globeImageUrl={null}
         showGlobe={true}
         showAtmosphere={true}
-        atmosphereColor="#00897B"
-        atmosphereAltitude={0.15}
-        // Globe surface (ocean)
+        // Brighter atmosphere — tealBright instead of teal, thicker halo
+        atmosphereColor="#00BFA5"
+        atmosphereAltitude={0.22}
+        // Globe surface (ocean) — lifted from near-black to a visible
+        // midnight blue with subtle self-illumination and specular shine.
         globeMaterial={{
-          color: "#0A0F1A",
-          emissive: "#0A0F1A",
-          shininess: 0,
+          color: "#152238",
+          emissive: "#0D1828",
+          emissiveIntensity: 0.35,
+          specular: "#1A3A5C",
+          shininess: 15,
         }}
         // Country polygons
         polygonsData={geoData?.features ?? []}
-        polygonAltitude={0.01}
-        polygonCapColor={(d: GeoFeature) =>
-          getCountryColor(getIsoCode(d.properties), viewMode, activityByIso)
-        }
-        polygonSideColor={() => "rgba(20, 20, 25, 0.5)"}
-        polygonStrokeColor={() => "#0A0F1A"}
+        // Smoothly animate altitude changes on hover enter/exit.
+        // Gated on reduced-motion preference — snap instantly when on.
+        polygonsTransitionDuration={reducedMotion ? 0 : 250}
+        polygonAltitude={(d: GeoFeature) => {
+          const iso = getIsoCode(d.properties);
+          return iso && iso === hoveredIso ? 0.06 : 0.01;
+        }}
+        polygonCapColor={(d: GeoFeature) => {
+          const iso = getIsoCode(d.properties);
+          if (iso && iso === hoveredIso) {
+            // Hover highlight — swap fill to tealMax for an unmistakable
+            // glow. Overrides whatever deviation color would normally apply.
+            return "#00E5CC";
+          }
+          return getCountryColor(iso, viewMode, activityByIso);
+        }}
+        polygonSideColor={() => "rgba(30, 50, 80, 0.7)"}
+        polygonStrokeColor={(d: GeoFeature) => {
+          const iso = getIsoCode(d.properties);
+          return iso && iso === hoveredIso
+            ? "rgba(0, 229, 204, 0.95)" // hovered: bright tealMax border
+            : "rgba(0, 191, 165, 0.35)"; // default: tealBright at 35% — subtle but visible
+        }}
         polygonLabel={(d: GeoFeature) => {
           const iso = getIsoCode(d.properties);
           if (!iso) return "";
@@ -236,6 +278,14 @@ export default function GlobeWrapper({
           const iso = getIsoCode(feature.properties);
           if (iso && activityByIso.has(iso)) {
             router.push(`/country/${iso}`);
+          }
+        }}
+        onPolygonHover={(polygon: unknown) => {
+          if (polygon) {
+            const feature = polygon as GeoFeature;
+            setHoveredIso(getIsoCode(feature.properties) ?? null);
+          } else {
+            setHoveredIso(null);
           }
         }}
         // Coordination arcs
