@@ -199,3 +199,26 @@ class TestPipelineRowsDontLeakInternalFields:
             # Also strip any `_`-prefixed internal fields
             for key in row.keys():
                 assert not key.startswith("_"), f"Internal field leaked: {key}"
+
+    def test_caveat_stripped_from_articles_before_db_write(self):
+        """REGRESSION (caught on first live run): the anti-hal validator adds
+        `_caveat` to article rows that get PUBLISH_WITH_CAVEAT. That field
+        is internal-only and must be stripped before insert_articles, or
+        Supabase rejects the batch with `Could not find the '_caveat' column`.
+        """
+        db = InMemoryDb()
+        run_pipeline(
+            countries=["RU"],
+            hours=1,
+            dry_run=False,
+            db=db,
+            gdelt_query_country=_fake_gdelt_query_russia,
+            target_date=date(2026, 4, 10),
+            log_to_stdout_print=False,
+        )
+        assert len(db.articles) > 0
+        for row in db.articles:
+            for key in row.keys():
+                assert not key.startswith("_"), (
+                    f"Internal field leaked into articles table: {key}"
+                )

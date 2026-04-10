@@ -52,7 +52,7 @@ from .countries import fips_to_iso, iso_to_fips
 from .coordination import ThemeSpike, detect_coordination
 from .db import InMemoryDb, SupabaseDb, make_db
 from .deviation import calculate_deviation
-from .outlets import get_monitored_countries
+from .outlets import get_monitored_countries, get_outlet
 from .themes import aggregate_themes, extract_themes
 
 logger = logging.getLogger(__name__)
@@ -150,10 +150,66 @@ class PipelineResult:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+# P2 hotfix: GDELT returns language as full English names ("Chinese",
+# "Russian") rather than ISO 639-1 codes. The classifier's `[:2]` fallback
+# produces wrong codes like "ch" (should be "zh"). This map covers the
+# languages that appear in real state media outlets we monitor.
+_GDELT_LANGUAGE_MAP: dict[str, str] = {
+    "english": "en", "russian": "ru", "chinese": "zh", "mandarin": "zh",
+    "arabic": "ar", "persian": "fa", "farsi": "fa", "spanish": "es",
+    "french": "fr", "german": "de", "portuguese": "pt", "italian": "it",
+    "japanese": "ja", "korean": "ko", "vietnamese": "vi", "tagalog": "tl",
+    "filipino": "tl", "turkish": "tr", "hindi": "hi", "indonesian": "id",
+    "polish": "pl", "ukrainian": "uk", "dutch": "nl", "swedish": "sv",
+    "czech": "cs", "hungarian": "hu", "romanian": "ro", "serbian": "sr",
+    "croatian": "hr", "thai": "th", "urdu": "ur", "malay": "ms",
+    "swahili": "sw", "amharic": "am", "hebrew": "he", "greek": "el",
+    "bulgarian": "bg", "bengali": "bn", "norwegian": "no", "danish": "da",
+    "finnish": "fi", "slovak": "sk", "slovenian": "sl", "lithuanian": "lt",
+    "latvian": "lv", "estonian": "et", "albanian": "sq", "macedonian": "mk",
+    "belarusian": "be", "georgian": "ka", "armenian": "hy", "azerbaijani": "az",
+    "kazakh": "kk", "uzbek": "uz", "kyrgyz": "ky", "tajik": "tg",
+    "turkmen": "tk", "mongolian": "mn", "burmese": "my", "khmer": "km",
+    "lao": "lo", "nepali": "ne", "sinhala": "si", "pashto": "ps",
+    "kurdish": "ku",
+}
+
+
+def _normalize_gdelt_language(raw: Any) -> str | None:
+    """Map a GDELT language field to a valid ISO 639-1 code.
+
+    GDELT returns either full English language names ("Chinese") or
+    occasionally already-short codes. We need to always return a valid
+    2-char ISO code (or None) so the CHAR(2) schema column accepts it.
+    """
+    if not raw:
+        return None
+    s = str(raw).strip().lower()
+    if not s:
+        return None
+    # Already a 2-char code — assume it's valid ISO 639-1
+    if len(s) == 2 and s.isalpha():
+        return s
+    # Full name lookup
+    if s in _GDELT_LANGUAGE_MAP:
+        return _GDELT_LANGUAGE_MAP[s]
+    # Unknown full name — log and return None rather than guessing
+    logger.debug("Unknown GDELT language %r — setting to None", raw)
+    return None
+
+
 def _gdelt_row_to_article(row: dict[str, Any]) -> Article:
     """GDELT returns FIPS country codes; the rest of the pipeline uses ISO 3166-1 alpha-2.
 
     Translate at the boundary so internal modules can assume ISO codes throughout.
+
+    P2 live-run hotfix: GDELT occasionally returns full country names instead
+    of 2-letter codes (e.g. "UNITED STATES"), which overflows the CHAR(2)
+    schema column. In that case we clear source_country so the pipeline's
+    query-country fallback fires instead.
+
+    Also remaps GDELT's full English language names ("Chinese") to ISO 639-1
+    codes ("zh") instead of the buggy `[:2]` fallback that produced "ch".
     """
     article = Article.from_gdelt_row(row)
     if article.source_country and len(article.source_country) == 2:
@@ -162,6 +218,18 @@ def _gdelt_row_to_article(row: dict[str, Any]) -> Article:
             iso = fips_to_iso(article.source_country)
             if iso:
                 article.source_country = iso
+    elif article.source_country and len(article.source_country) > 2:
+        # GDELT returned a country name — clear to trigger query-country fallback
+        logger.debug(
+            "GDELT returned non-2-char sourcecountry %r for %s, clearing",
+            article.source_country, article.url,
+        )
+        article.source_country = ""
+
+    # Re-normalize language directly from the raw row (the Article.from_gdelt_row
+    # truncation gave us wrong codes like "ch" for Chinese). Empty = None.
+    lang = _normalize_gdelt_language(row.get("language"))
+    article.language = lang or ""
     return article
 
 
@@ -415,6 +483,17 @@ def run_pipeline(
                 # Force the GDELT-reported country to ISO for consistency
                 if not article.source_country:
                     article.source_country = iso2
+
+                # P2 live-run hotfix: Only ingest articles from known
+                # state-media outlets. GDELT returns ALL articles from a
+                # country query (including private aggregators like
+                # baijiahao.baidu.com), so we have to filter here or we
+                # pollute the dataset with non-state-media content.
+                # The classifier handles the known-outlet walk-up for
+                # subdomains, so "russian.rt.com" → rt.com still matches.
+                if get_outlet(article.domain) is None:
+                    continue
+
                 audience, confidence = classify_audience(article)
                 stats.articles_classified += 1
                 if audience == "DOMESTIC":
@@ -473,16 +552,22 @@ def run_pipeline(
     _persist_validation_batch(db, class_validations, dry_run, only_non_publish=True)
 
     # 5. Insert articles (PIPE-C1: fail-fast instead of log-and-continue)
+    # Strip anti-hal internal fields (_caveat, etc.) before DB write —
+    # they're not columns in the articles table.
+    db_article_rows = [
+        {k: v for k, v in row.items() if not k.startswith("_")}
+        for row in article_rows
+    ]
     if dry_run:
-        print(f"DRY RUN: would insert {len(article_rows)} article rows into Supabase")
+        print(f"DRY RUN: would insert {len(db_article_rows)} article rows into Supabase")
     else:
         _check_time_budget(started_at, time_budget_seconds, phase="insert_articles")
         try:
-            inserted = db.insert_articles(article_rows)
+            inserted = db.insert_articles(db_article_rows)
             stats.articles_inserted = inserted
-            if article_rows and inserted == 0:
+            if db_article_rows and inserted == 0:
                 raise PipelineError(
-                    f"insert_articles returned 0 for {len(article_rows)} rows — "
+                    f"insert_articles returned 0 for {len(db_article_rows)} rows — "
                     "Supabase may be rejecting writes. Aborting."
                 )
         except PipelineError:
@@ -490,7 +575,7 @@ def run_pipeline(
         except Exception as exc:
             logger.error("Failed to insert articles: %s", exc)
             raise PipelineError(f"Article insertion failed: {exc}") from exc
-    result.articles = article_rows
+    result.articles = db_article_rows
 
     # 6. Recalculate baselines + compute today's deviation per (country, audience)
     activity_rows: list[dict[str, Any]] = []

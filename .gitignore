@@ -27,6 +27,7 @@ __pycache__/
 pipeline/build/
 pipeline/dist/
 pipeline/lib/
+pipeline/logs/
 *.egg-info/
 .installed.cfg
 *.egg
