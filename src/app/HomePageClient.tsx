@@ -6,7 +6,9 @@ import Wordmark from "@/components/Brand/Wordmark";
 import ViewToggle from "@/components/Globe/ViewToggle";
 import ColorLegend from "@/components/Globe/ColorLegend";
 import GlobeWrapper from "@/components/Globe/GlobeWrapper";
+import RegionFilter from "@/components/Globe/RegionFilter";
 import HistoricalDataBanner from "@/components/HistoricalDataBanner";
+import { makeRegionFilter, type Region } from "@/lib/country-regions";
 import type {
   CountryActivity,
   CoordinationArc,
@@ -31,11 +33,26 @@ export default function HomePageClient({
   latestDate,
 }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>("BOTH");
+  // Region filter: null = "all regions", explicit set = "only these regions".
+  // Countries outside the selected regions fall out of the dataset passed to
+  // the globe and the top-movers panel, so the globe renders them as neutral
+  // (the same fallback used for unmonitored countries).
+  const [selectedRegions, setSelectedRegions] = useState<Set<Region> | null>(
+    null,
+  );
+
+  // Apply the region filter to the raw country list before anything else
+  // consumes it. Top movers, globe polygons, trending themes, and the footer
+  // "N countries with data" count all read from this filtered set.
+  const filteredCountryActivity = useMemo(() => {
+    const predicate = makeRegionFilter(selectedRegions);
+    return countryActivity.filter((c) => predicate(c.iso2));
+  }, [countryActivity, selectedRegions]);
 
   // Top 5 most-elevated countries (by max |z-score| across audience types).
-  // During cold start z-scores are all 0, so we fall back to raw article count.
+  // After the region filter, this reflects only the selected regions.
   const topMovers = useMemo(() => {
-    const sorted = [...countryActivity].sort((a, b) => {
+    const sorted = [...filteredCountryActivity].sort((a, b) => {
       const aZ = Math.max(
         Math.abs(a.domestic.zScore),
         Math.abs(a.international.zScore),
@@ -50,7 +67,7 @@ export default function HomePageClient({
       return bCount - aCount;
     });
     return sorted.slice(0, 5);
-  }, [countryActivity]);
+  }, [filteredCountryActivity]);
 
   const dateLabel = latestDate
     ? new Date(latestDate + "T00:00:00Z").toLocaleDateString("en-US", {
@@ -124,11 +141,24 @@ export default function HomePageClient({
             </span>
             <span className="mx-2 text-bg-divider">•</span>
             <span className="text-mono">{dateLabel}</span>
+            {selectedRegions !== null && (
+              <>
+                <span className="mx-2 text-bg-divider">•</span>
+                <span className="text-mono text-accent-tealBright">
+                  {filteredCountryActivity.length} of {countryActivity.length}{" "}
+                  countries
+                </span>
+              </>
+            )}
           </h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <ColorLegend />
           <ViewToggle value={viewMode} onChange={setViewMode} />
+          <RegionFilter
+            selected={selectedRegions}
+            onChange={setSelectedRegions}
+          />
         </div>
       </div>
 
@@ -136,7 +166,7 @@ export default function HomePageClient({
       <div className="relative">
         <GlobeWrapper
           viewMode={viewMode}
-          countryActivity={countryActivity}
+          countryActivity={filteredCountryActivity}
           coordinationArcs={coordinationArcs}
         />
       </div>
@@ -252,8 +282,11 @@ export default function HomePageClient({
       <footer className="max-w-[1400px] mx-auto px-6 py-6 text-xs text-text-secondary border-t border-bg-divider">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>
-            Atlas Peak Media, LLC · {countryActivity.length} countries with data
-            · US/FVEY excluded
+            Atlas Peak Media, LLC ·{" "}
+            {selectedRegions === null
+              ? `${countryActivity.length} countries with data`
+              : `${filteredCountryActivity.length} of ${countryActivity.length} countries (filtered)`}
+            {" "}· US/FVEY excluded
           </span>
           <span className="text-mono">
             {isDummy ? "DEMO DATA" : "LIVE DATA"} ·{" "}
