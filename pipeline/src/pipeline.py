@@ -52,7 +52,12 @@ from .countries import fips_to_iso, iso_to_fips
 from .coordination import ThemeSpike, detect_coordination
 from .db import InMemoryDb, SupabaseDb, make_db
 from .deviation import calculate_deviation
-from .outlets import get_monitored_countries, get_outlet
+from .outlets import (
+    LOCKED_DOWN_COUNTRIES,
+    get_monitored_countries,
+    get_outlet,
+    get_outlets_for_country,
+)
 from .themes import aggregate_themes, extract_themes
 
 logger = logging.getLogger(__name__)
@@ -343,6 +348,7 @@ def run_pipeline(
     dry_run: bool = False,
     db: SupabaseDb | InMemoryDb | None = None,
     gdelt_query_country: Callable[..., Any] | None = None,
+    gdelt_query_domain: Callable[..., Any] | None = None,
     target_date: date | None = None,
     log_to_stdout_print: bool = True,
     time_budget_seconds: float = DEFAULT_TIME_BUDGET_SECONDS,
@@ -436,10 +442,13 @@ def run_pipeline(
             # on a quota probe failure — log loudly instead).
             logger.warning("Storage quota pre-flight check failed: %s", exc)
 
-    # 3. Resolve the GDELT client
+    # 3. Resolve the GDELT client(s)
     if gdelt_query_country is None:
         from .gdelt_client import query_country as default_query
         gdelt_query_country = default_query
+    if gdelt_query_domain is None:
+        from .gdelt_client import query_domain as default_domain_query
+        gdelt_query_domain = default_domain_query
 
     stats = PipelineStats(countries_queried=len(target_countries))
     result = PipelineResult(stats=stats)
@@ -453,34 +462,21 @@ def run_pipeline(
     by_country_audience: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     theme_buckets: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-    for iso2 in target_countries:
-        # PIPE-C3: time budget check before each country query
-        _check_time_budget(started_at, time_budget_seconds, phase=f"query_country({iso2})")
-
-        fips = iso_to_fips(iso2) or iso2  # if no mapping, use ISO as a fallback
-        try:
-            qresult = gdelt_query_country(fips, hours=hours)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("GDELT query failed for %s (%s): %s", iso2, fips, exc)
-            continue
-
-        df = getattr(qresult, "df", None)
-        if df is None or (hasattr(df, "empty") and df.empty):
-            logger.debug("No articles for %s", iso2)
-            continue
-
-        # Convert DataFrame rows to dicts (so the test fakes can pass plain lists too)
-        if hasattr(df, "to_dict"):
-            rows = df.to_dict(orient="records")
-        else:
-            rows = list(df)
-
-        stats.articles_received += len(rows)
-
-        for raw in rows:
+    # Seen-URL dedupe set (B9): used to merge country-query results and
+    # domain-query fallback results without double-counting articles that
+    # appear in both paths. Scoped per-country so unrelated countries
+    # don't interfere with each other.
+    def _ingest_gdelt_rows(
+        raws: list[dict[str, Any]],
+        *,
+        iso2: str,
+        seen_urls: set[str],
+    ) -> int:
+        """Classify + append a batch of raw GDELT rows. Returns count added."""
+        added = 0
+        for raw in raws:
             try:
                 article = _gdelt_row_to_article(raw)
-                # Force the GDELT-reported country to ISO for consistency
                 if not article.source_country:
                     article.source_country = iso2
 
@@ -489,10 +485,14 @@ def run_pipeline(
                 # country query (including private aggregators like
                 # baijiahao.baidu.com), so we have to filter here or we
                 # pollute the dataset with non-state-media content.
-                # The classifier handles the known-outlet walk-up for
-                # subdomains, so "russian.rt.com" → rt.com still matches.
                 if get_outlet(article.domain) is None:
                     continue
+
+                # B9 dedupe: skip URLs we already ingested via the country
+                # query path when we loop back through the domain fallback.
+                if article.url in seen_urls:
+                    continue
+                seen_urls.add(article.url)
 
                 audience, confidence = classify_audience(article)
                 stats.articles_classified += 1
@@ -523,9 +523,98 @@ def run_pipeline(
                 by_country_audience[key].append(row)
                 for theme in themes:
                     theme_buckets[key][theme] += 1
+                added += 1
             except Exception as exc:  # noqa: BLE001
                 logger.debug("Skipping unparseable GDELT row: %s", exc)
                 continue
+        return added
+
+    # B9 fallback threshold: if a locked-down country query returns fewer than
+    # this many state-media articles, iterate its registered outlets directly
+    # via GDELT's domain filter (which works where sourcecountry does not).
+    STATE_MEDIA_FALLBACK_THRESHOLD = 3
+
+    for iso2 in target_countries:
+        # PIPE-C3: time budget check before each country query
+        _check_time_budget(started_at, time_budget_seconds, phase=f"query_country({iso2})")
+
+        # Per-country seen-URL dedupe set so country query + domain fallback
+        # can merge results without double-counting.
+        seen_urls_for_country: set[str] = set()
+
+        fips = iso_to_fips(iso2) or iso2  # if no mapping, use ISO as a fallback
+        country_query_rows: list[dict[str, Any]] = []
+        try:
+            qresult = gdelt_query_country(fips, hours=hours)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("GDELT query failed for %s (%s): %s", iso2, fips, exc)
+            qresult = None
+
+        if qresult is not None:
+            df = getattr(qresult, "df", None)
+            if df is not None and not (hasattr(df, "empty") and df.empty):
+                if hasattr(df, "to_dict"):
+                    country_query_rows = df.to_dict(orient="records")
+                else:
+                    country_query_rows = list(df)
+                stats.articles_received += len(country_query_rows)
+
+        state_media_added = _ingest_gdelt_rows(
+            country_query_rows,
+            iso2=iso2,
+            seen_urls=seen_urls_for_country,
+        )
+
+        # B9: Hybrid ingestion fallback for locked-down states.
+        # When a locked-down country's country-level GDELT query returns
+        # fewer than STATE_MEDIA_FALLBACK_THRESHOLD state-media articles,
+        # iterate its registered outlets and query each by domain. Domain
+        # queries work where sourcecountry queries fail for these states
+        # (empirically confirmed in Phase 2 live runs: Iran returned 0
+        # state-media articles by sourcecountry despite 11+ registered
+        # domains producing content that day).
+        if (
+            iso2 in LOCKED_DOWN_COUNTRIES
+            and state_media_added < STATE_MEDIA_FALLBACK_THRESHOLD
+        ):
+            registered_outlets = get_outlets_for_country(iso2)
+            if registered_outlets:
+                logger.info(
+                    "[B9 fallback] %s: country query returned %d state-media "
+                    "articles (below threshold %d). Querying %d registered "
+                    "outlets by domain.",
+                    iso2,
+                    state_media_added,
+                    STATE_MEDIA_FALLBACK_THRESHOLD,
+                    len(registered_outlets),
+                )
+                for outlet in registered_outlets:
+                    _check_time_budget(
+                        started_at,
+                        time_budget_seconds,
+                        phase=f"fallback_domain({outlet.domain})",
+                    )
+                    try:
+                        dq = gdelt_query_domain(outlet.domain, hours=hours)
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning(
+                            "Domain fallback failed for %s: %s", outlet.domain, exc
+                        )
+                        continue
+
+                    ddf = getattr(dq, "df", None)
+                    if ddf is None or (hasattr(ddf, "empty") and ddf.empty):
+                        continue
+                    if hasattr(ddf, "to_dict"):
+                        drows = ddf.to_dict(orient="records")
+                    else:
+                        drows = list(ddf)
+                    stats.articles_received += len(drows)
+                    _ingest_gdelt_rows(
+                        drows,
+                        iso2=iso2,
+                        seen_urls=seen_urls_for_country,
+                    )
 
     print(
         f"Classified {stats.domestic_count} articles as DOMESTIC, "

@@ -28,6 +28,21 @@ logger = logging.getLogger(__name__)
 # Hard FVEY exclusion — enforced at load time
 FVEY_COUNTRIES: frozenset[str] = frozenset({"US", "GB", "CA", "AU", "NZ"})
 
+# Locked-down / restrictive-press countries where GDELT's `sourcecountry`
+# filter is unreliable. For these, the live pipeline falls back to querying
+# each registered outlet by `domain` individually when the country-level
+# query returns too little state media (see pipeline.py B9 fallback).
+#
+# Empirical evidence from Phase 2 live runs: the country query for Iran
+# returned 0 state-media articles despite 11 registered outlets producing
+# content that day. GDELT's internal crawl strategy leaves state media
+# behind paywalls, geo-blocks, or off the crawl list entirely, so the
+# `sourcecountry` tag is incomplete. The domain-level filter still works
+# because the outlets we care about are on GDELT's domain whitelist.
+LOCKED_DOWN_COUNTRIES: frozenset[str] = frozenset(
+    {"IR", "KP", "CU", "BY", "VE", "SY", "NI"}
+)
+
 # Path to the outlets database (relative to this file: src/outlets.py -> ../data/outlets.json)
 DEFAULT_OUTLETS_PATH = Path(__file__).resolve().parent.parent / "data" / "outlets.json"
 

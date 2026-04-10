@@ -17,6 +17,7 @@ from datetime import date
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 
@@ -222,3 +223,194 @@ class TestPipelineRowsDontLeakInternalFields:
                 assert not key.startswith("_"), (
                     f"Internal field leaked into articles table: {key}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# B9: Hybrid ingestion fallback for locked-down states
+# ---------------------------------------------------------------------------
+def _make_iran_article(i: int, domain: str = "presstv.ir") -> dict:
+    return {
+        "url": f"https://{domain}/article/{i}",
+        "title": f"Iran state media article {i}",
+        "seendate": "20260410120000",
+        "domain": domain,
+        "language": "English",
+        "sourcecountry": "IR",
+        "tone": 0.0,
+    }
+
+
+def _fake_empty_country_query(country_fips, hours=1):
+    """Iran returns 0 results — simulating the GDELT sourcecountry broken-filter case."""
+    return GdeltQueryResult(
+        df=pd.DataFrame(),
+        query_str=f"empty country={country_fips}",
+        duration_seconds=0.0,
+    )
+
+
+class _DomainQueryStub:
+    """Programmable fake for query_domain() — records calls + returns canned rows."""
+
+    def __init__(self, per_domain_rows: dict[str, list[dict]] | None = None):
+        self.per_domain_rows = per_domain_rows or {}
+        self.calls: list[str] = []
+
+    def __call__(self, domain, hours=1):
+        self.calls.append(domain)
+        rows = self.per_domain_rows.get(domain, [])
+        return GdeltQueryResult(
+            df=pd.DataFrame(rows),
+            query_str=f"domain={domain}",
+            duration_seconds=0.0,
+        )
+
+
+class TestHybridFallback:
+    def test_fallback_triggers_on_empty_iran_country_query(self):
+        """Iran's country query returns 0 → fallback queries every IR outlet."""
+        db = InMemoryDb()
+        # presstv.ir is the only IR domain we canned; other IR outlets get []
+        domain_stub = _DomainQueryStub(
+            per_domain_rows={
+                "presstv.ir": [_make_iran_article(i, "presstv.ir") for i in range(5)]
+            }
+        )
+        run_pipeline(
+            countries=["IR"],
+            hours=1,
+            dry_run=False,
+            db=db,
+            gdelt_query_country=_fake_empty_country_query,
+            gdelt_query_domain=domain_stub,
+            target_date=date(2026, 4, 10),
+            log_to_stdout_print=False,
+        )
+        # Fallback should have queried MULTIPLE IR outlets (all 20+ registered)
+        assert len(domain_stub.calls) > 5
+        assert "presstv.ir" in domain_stub.calls
+        # 5 presstv.ir articles should have been ingested
+        iran_articles = [a for a in db.articles if a.get("source_country") == "IR"]
+        assert len(iran_articles) == 5
+
+    def test_fallback_NOT_triggered_for_non_locked_down_country(self):
+        """Russia is NOT in LOCKED_DOWN_COUNTRIES → no domain fallback even if
+        country query returns nothing."""
+        db = InMemoryDb()
+        domain_stub = _DomainQueryStub()
+        run_pipeline(
+            countries=["RU"],
+            hours=1,
+            dry_run=False,
+            db=db,
+            gdelt_query_country=_fake_empty_country_query,
+            gdelt_query_domain=domain_stub,
+            target_date=date(2026, 4, 10),
+            log_to_stdout_print=False,
+        )
+        # Russia is NOT locked-down, so domain fallback should NOT fire
+        assert domain_stub.calls == []
+
+    def test_fallback_NOT_triggered_when_country_query_has_enough(self):
+        """Fallback only fires when country query returned < threshold
+        state-media articles. If Iran's country query somehow returned
+        enough, the fallback should be skipped."""
+        # Build a fake country query that DOES return plenty of Iranian
+        # state media (simulating a day when GDELT's sourcecountry happened
+        # to crawl IR correctly — rare but possible).
+        def _iran_country_query_with_enough(country_fips, hours=1):
+            if country_fips != "IR":
+                return GdeltQueryResult(
+                    df=pd.DataFrame(),
+                    query_str=f"empty country={country_fips}",
+                    duration_seconds=0.0,
+                )
+            return GdeltQueryResult(
+                df=pd.DataFrame(
+                    [_make_iran_article(i, "presstv.ir") for i in range(10)]
+                ),
+                query_str="iran country query",
+                duration_seconds=0.0,
+            )
+
+        db = InMemoryDb()
+        domain_stub = _DomainQueryStub()
+        run_pipeline(
+            countries=["IR"],
+            hours=1,
+            dry_run=False,
+            db=db,
+            gdelt_query_country=_iran_country_query_with_enough,
+            gdelt_query_domain=domain_stub,
+            target_date=date(2026, 4, 10),
+            log_to_stdout_print=False,
+        )
+        # >= threshold state-media articles in the country query → no fallback
+        assert domain_stub.calls == []
+        assert len(db.articles) == 10
+
+    def test_fallback_dedupes_by_url(self):
+        """An article URL returned by BOTH the country query AND the domain
+        fallback should only land in the DB once."""
+        shared_url_rows = [_make_iran_article(i, "presstv.ir") for i in range(2)]
+
+        def _iran_country_with_2(country_fips, hours=1):
+            if country_fips != "IR":
+                return GdeltQueryResult(
+                    df=pd.DataFrame(),
+                    query_str="empty",
+                    duration_seconds=0.0,
+                )
+            return GdeltQueryResult(
+                df=pd.DataFrame(shared_url_rows),
+                query_str="iran 2 rows",
+                duration_seconds=0.0,
+            )
+
+        # Domain fallback returns the SAME 2 URLs + 3 NEW ones = 5 unique total
+        new_rows = [_make_iran_article(i, "presstv.ir") for i in range(2, 5)]
+        domain_stub = _DomainQueryStub(
+            per_domain_rows={"presstv.ir": shared_url_rows + new_rows}
+        )
+
+        db = InMemoryDb()
+        run_pipeline(
+            countries=["IR"],
+            hours=1,
+            dry_run=False,
+            db=db,
+            gdelt_query_country=_iran_country_with_2,
+            gdelt_query_domain=domain_stub,
+            target_date=date(2026, 4, 10),
+            log_to_stdout_print=False,
+        )
+        # Total unique URLs: 2 (country) + 3 (new from fallback) = 5
+        iran_articles = [a for a in db.articles if a.get("source_country") == "IR"]
+        urls = {a["url"] for a in iran_articles}
+        assert len(urls) == 5  # no duplicates
+
+    def test_fallback_respects_time_budget(self):
+        """If the time budget expires mid-fallback, TimeBudgetExceeded must
+        be raised rather than swallowed."""
+        from src.pipeline import TimeBudgetExceeded
+
+        # Blow a tiny budget immediately
+        domain_stub = _DomainQueryStub(
+            per_domain_rows={
+                "presstv.ir": [_make_iran_article(i, "presstv.ir") for i in range(3)]
+            }
+        )
+        db = InMemoryDb()
+
+        with pytest.raises(TimeBudgetExceeded):
+            run_pipeline(
+                countries=["IR"],
+                hours=1,
+                dry_run=False,
+                db=db,
+                gdelt_query_country=_fake_empty_country_query,
+                gdelt_query_domain=domain_stub,
+                target_date=date(2026, 4, 10),
+                log_to_stdout_print=False,
+                time_budget_seconds=0.000001,  # effectively 0
+            )
