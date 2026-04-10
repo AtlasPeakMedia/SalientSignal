@@ -308,6 +308,9 @@ export async function getAllCountryActivity(): Promise<CountryActivity[]> {
       domestic,
       international,
       coldStart: Boolean(domestic.coldStart || international.coldStart),
+      // B7: carry the row date through so the country page doesn't call
+      // new Date() at render time (SSR/client hydration mismatch in Firefox).
+      latestDate: latestRow.date,
     });
   }
 

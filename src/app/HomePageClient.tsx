@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Wordmark from "@/components/Brand/Wordmark";
+import Clock from "@/components/Clock";
 import ViewToggle from "@/components/Globe/ViewToggle";
 import ColorLegend from "@/components/Globe/ColorLegend";
 import GlobeWrapper from "@/components/Globe/GlobeWrapper";
@@ -69,6 +70,10 @@ export default function HomePageClient({
     return sorted.slice(0, 5);
   }, [filteredCountryActivity]);
 
+  // B7 Firefox fix: NEVER call new Date() here without an explicit ISO date.
+  // When latestDate is missing (shouldn't happen for live data), fall back to
+  // a generic label instead of a wall-clock Date() — which would hydration-
+  // mismatch on SSR vs client.
   const dateLabel = latestDate
     ? new Date(latestDate + "T00:00:00Z").toLocaleDateString("en-US", {
         weekday: "long",
@@ -76,11 +81,7 @@ export default function HomePageClient({
         day: "numeric",
         timeZone: "UTC",
       })
-    : new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      });
+    : "the most recent day";
 
   // D16: Post-backfill — the 21-day cold-start period is gone. The banner
   // now shows for two reasons: (a) dummy data fixture is active, or (b)
@@ -289,11 +290,7 @@ export default function HomePageClient({
             {" "}· US/FVEY excluded
           </span>
           <span className="text-mono">
-            {isDummy ? "DEMO DATA" : "LIVE DATA"} ·{" "}
-            {new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {isDummy ? "DEMO DATA" : "LIVE DATA"} · <Clock />
           </span>
         </div>
       </footer>

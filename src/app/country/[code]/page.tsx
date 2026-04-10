@@ -60,15 +60,10 @@ export default async function CountryPage({ params }: PageProps) {
         </div>
         <p className="text-sm text-text-body max-w-3xl mt-3">
           State media activity for{" "}
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-          . Compare what {country.name}&apos;s state outlets are publishing for
-          domestic audiences versus international audiences. Baselines are
-          30-day rolling averages from 15 months of historical GDELT data.
+          {formatDataDate(country.latestDate)}. Compare what {country.name}
+          &apos;s state outlets are publishing for domestic audiences versus
+          international audiences. Baselines are 30-day rolling averages from
+          15 months of historical GDELT data.
         </p>
         {/* D16: The "Baseline calibrating" inline badge was removed after the
             historical backfill (Phase A) populated 15 months of real baselines.
@@ -251,6 +246,37 @@ function AudienceColumn({ audience, activity, headlines }: AudienceColumnProps) 
       </div>
     </div>
   );
+}
+
+/**
+ * Format a YYYY-MM-DD string (from country.latestDate) into a human-readable
+ * long-form label WITHOUT calling new Date() on the client.
+ *
+ * B7 Firefox fix: previously this component called
+ *   new Date().toLocaleDateString("en-US", { weekday: "long", ... })
+ * which ran on both the server (SSR clock) and the client (browser clock).
+ * When the two clocks differed by even a few seconds across the day
+ * boundary, React logged a hydration mismatch warning + error, which
+ * Firefox surfaced as 2 console errors and broke the page render.
+ *
+ * The fix: always parse the ISO date string from the DB row (which is
+ * stable across server/client), and use UTC interpretation so the parse
+ * result is deterministic regardless of the runtime's timezone.
+ */
+function formatDataDate(isoDate: string | undefined): string {
+  if (!isoDate) return "the most recent day";
+  try {
+    const d = new Date(isoDate + "T00:00:00Z");
+    return d.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  } catch {
+    return isoDate;
+  }
 }
 
 function Stat({

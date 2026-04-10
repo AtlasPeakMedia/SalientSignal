@@ -212,6 +212,10 @@ const tier3: Array<[string, string, string, string, number, number, number, numb
 
 const allRows = [...tier1, ...tier2, ...tier3];
 
+// Stable fixture date used by the dummy data path. MUST be stable (not new Date())
+// to avoid SSR/client hydration mismatches in Firefox — see B7 in the plan file.
+const DUMMY_FIXTURE_DATE = "2026-04-10";
+
 export const COUNTRY_ACTIVITY: CountryActivity[] = allRows.map(
   ([iso2, name, flag, region, domBaseline, domRatio, intlBaseline, intlRatio]) => ({
     iso2,
@@ -220,6 +224,7 @@ export const COUNTRY_ACTIVITY: CountryActivity[] = allRows.map(
     region,
     domestic: makeActivity(domBaseline, domRatio),
     international: makeActivity(intlBaseline, intlRatio),
+    latestDate: DUMMY_FIXTURE_DATE,
   })
 );
 

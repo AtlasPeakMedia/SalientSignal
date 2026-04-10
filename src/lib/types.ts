@@ -39,6 +39,15 @@ export interface CountryActivity {
   international: AudienceActivity;
   /** True if EITHER audience is still in the cold start window. */
   coldStart?: boolean;
+  /**
+   * ISO YYYY-MM-DD of the day this activity row represents. For live data
+   * this is the most recent ingested date from country_activity; for dummy
+   * data it's a stable fixture date. NEVER use ``new Date()`` to derive a
+   * label for this field on the client — that causes SSR/client hydration
+   * mismatches (see B7 Firefox fix). Always pass this through from the
+   * server component.
+   */
+  latestDate?: string;
 }
 
 /** One headline row used on the country detail page. */

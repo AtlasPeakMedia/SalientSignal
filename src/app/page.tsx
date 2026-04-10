@@ -27,17 +27,22 @@ export default async function HomePage() {
 
   const isDummy = isUsingDummyData();
 
-  // The "latest date" drives the stale-data banner (D16). Use the max of
-  // the row dates on live data; null on dummy so the banner shows the
-  // "preview data" label instead.
-  const latestDate = isDummy
-    ? null
-    : countryActivity.reduce<string | null>((acc, row) => {
-        // CountryActivity doesn't expose date directly on the aggregated row,
-        // but the data adapter already keys off the most-recent-date query so
-        // the rows reflect the latest ingested date. Fall back to today-iso.
-        return acc;
-      }, null) ?? new Date().toISOString().slice(0, 10);
+  // B7: Derive latestDate from the actual country_activity rows instead of
+  // new Date(). The data adapter stamps row.latestDate onto each CountryActivity
+  // from the Supabase query's most-recent-date keying, so we can read it off
+  // any row. This is stable across server + client and doesn't drift with
+  // the clock.
+  const latestDate = (() => {
+    if (isDummy) {
+      // Dummy rows stamp a stable fixture date we can read the same way
+      const row = countryActivity[0];
+      return row?.latestDate ?? null;
+    }
+    for (const row of countryActivity) {
+      if (row.latestDate) return row.latestDate;
+    }
+    return null;
+  })();
 
   return (
     <HomePageClient
