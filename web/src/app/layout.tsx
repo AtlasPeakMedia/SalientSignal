@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
@@ -15,6 +15,13 @@ export const metadata: Metadata = {
     index: false, // Pre-launch — disable until JAG sign-off
     follow: false,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0D0D0F",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
