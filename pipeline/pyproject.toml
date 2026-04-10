@@ -10,8 +10,11 @@ authors = [
 ]
 
 dependencies = [
-    # GDELT DOC 2.0 client
-    "gdeltdoc>=1.7.0",
+    # GDELT DOC 2.0 client.
+    # Pinned to >=1.10.3 for (a) the domain_exact filter bug fix in 1.10.1 and
+    # (b) the empty-response edge case fix in 1.10.3 — both relied upon by
+    # gdelt_timeline_client.query_domain_timeline() during historical backfill.
+    "gdeltdoc>=1.10.3",
     # Supabase Python client
     "supabase>=2.5.0",
     # Environment variable management
