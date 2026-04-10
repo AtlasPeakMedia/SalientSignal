@@ -194,11 +194,18 @@ function rowToAudience(row: DbCountryActivityRow): AudienceActivity {
  */
 export async function getAllCountryActivity(): Promise<CountryActivity[]> {
   if (isUsingDummyData()) {
+    console.log("[data] isUsingDummyData() = true, returning fixture");
     return COUNTRY_ACTIVITY;
   }
 
   const client = getServerSupabase();
-  if (!client) return COUNTRY_ACTIVITY; // credentials dropped at runtime
+  if (!client) {
+    console.warn(
+      "[data] getServerSupabase() returned null — credentials missing. " +
+        "Check SUPABASE_URL and SUPABASE_SECRET_KEY env vars. Falling back to dummy.",
+    );
+    return COUNTRY_ACTIVITY;
+  }
 
   // Find the most recent date with data.
   const { data: latestRow, error: latestErr } = await client
@@ -208,10 +215,29 @@ export async function getAllCountryActivity(): Promise<CountryActivity[]> {
     .limit(1)
     .maybeSingle();
 
-  if (latestErr || !latestRow?.date) {
-    console.warn("[data] No country_activity rows found, falling back to dummy");
+  if (latestErr) {
+    console.error(
+      "[data] Supabase error fetching latest country_activity date:",
+      JSON.stringify({
+        message: latestErr.message,
+        code: latestErr.code,
+        details: latestErr.details,
+        hint: latestErr.hint,
+      }),
+    );
     return COUNTRY_ACTIVITY;
   }
+  if (!latestRow?.date) {
+    console.warn(
+      "[data] country_activity table is empty (no rows for any date). " +
+        "Pipeline may not have run yet. Falling back to dummy.",
+    );
+    return COUNTRY_ACTIVITY;
+  }
+
+  console.log(
+    `[data] Found latest country_activity date: ${latestRow.date}. Fetching all rows for that date...`,
+  );
 
   const { data: rows, error: rowsErr } = await client
     .from("country_activity")
@@ -220,10 +246,26 @@ export async function getAllCountryActivity(): Promise<CountryActivity[]> {
     )
     .eq("date", latestRow.date);
 
-  if (rowsErr || !rows || rows.length === 0) {
-    console.warn("[data] country_activity query failed, falling back to dummy", rowsErr);
+  if (rowsErr) {
+    console.error(
+      "[data] Supabase error fetching country_activity rows:",
+      JSON.stringify({
+        message: rowsErr.message,
+        code: rowsErr.code,
+        details: rowsErr.details,
+        hint: rowsErr.hint,
+      }),
+    );
     return COUNTRY_ACTIVITY;
   }
+  if (!rows || rows.length === 0) {
+    console.warn(
+      `[data] Zero rows returned for date ${latestRow.date}. Falling back to dummy.`,
+    );
+    return COUNTRY_ACTIVITY;
+  }
+
+  console.log(`[data] Loaded ${rows.length} country_activity rows for ${latestRow.date}`);
 
   // Group rows by country, merge DOMESTIC + INTERNATIONAL into one object.
   type AudienceBucket = {

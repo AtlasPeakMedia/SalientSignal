@@ -6,9 +6,14 @@ import {
   isUsingDummyData,
 } from "@/lib/data";
 
-// Re-fetch every 5 minutes — the cron pipeline only updates hourly, so
-// stale-for-5-minutes is an acceptable tradeoff for edge caching.
-export const revalidate = 300;
+// Force this route to render on every request as a serverless function.
+// Previously used ISR (revalidate = 300) but that produced a Static output
+// format that Vercel's edge router couldn't locate on this monorepo layout,
+// causing every route to 404. Dynamic rendering uses a different output
+// layout that works correctly. Performance cost is negligible here because
+// each request just reads from Supabase, which is fast.
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export default async function HomePage() {
   const [countryActivity, coordinationArcs, trendingThemes] = await Promise.all([

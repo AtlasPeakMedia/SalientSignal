@@ -13,7 +13,10 @@ interface PageProps {
   params: Promise<{ code: string }>;
 }
 
-export const revalidate = 300;
+// Force this route to render on every request as a serverless function.
+// See the matching note on ../page.tsx for why ISR was abandoned here.
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export default async function CountryPage({ params }: PageProps) {
   const { code } = await params;
