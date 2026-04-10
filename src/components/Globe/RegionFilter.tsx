@@ -59,7 +59,8 @@ export default function RegionFilter({ selected, onChange }: Props) {
     }
   };
 
-  const reset = () => onChange(null);
+  const selectAll = () => onChange(null);
+  const deselectAll = () => onChange(new Set<Region>());
 
   const label = (() => {
     if (selected === null) return "All regions";
@@ -103,17 +104,39 @@ export default function RegionFilter({ selected, onChange }: Props) {
           aria-label="Filter globe by region"
           className="absolute right-0 mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-md border border-bg-divider bg-bg-card shadow-lg z-20"
         >
-          <div className="px-3 py-2 border-b border-bg-divider flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-wider text-text-secondary">
-              Filter regions
-            </span>
-            <button
-              type="button"
-              onClick={reset}
-              className="text-[11px] text-accent-tealBright hover:text-accent-tealMax transition-colors"
-            >
-              Reset
-            </button>
+          <div className="px-3 py-2 border-b border-bg-divider">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] uppercase tracking-wider text-text-secondary">
+                Filter regions
+              </span>
+              <span className="text-[11px] text-mono text-text-secondary">
+                {selected === null
+                  ? REGIONS.length
+                  : selected.size}
+                /{REGIONS.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAll}
+                disabled={selected === null}
+                className="text-[11px] text-accent-tealBright hover:text-accent-tealMax transition-colors disabled:text-text-secondary disabled:cursor-not-allowed"
+              >
+                Select all
+              </button>
+              <span className="text-[11px] text-bg-divider" aria-hidden="true">
+                ·
+              </span>
+              <button
+                type="button"
+                onClick={deselectAll}
+                disabled={selected !== null && selected.size === 0}
+                className="text-[11px] text-accent-tealBright hover:text-accent-tealMax transition-colors disabled:text-text-secondary disabled:cursor-not-allowed"
+              >
+                Deselect all
+              </button>
+            </div>
           </div>
           <ul className="py-1">
             {REGIONS.map((r) => {
