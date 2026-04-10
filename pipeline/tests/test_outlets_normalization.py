@@ -148,3 +148,112 @@ class TestGetOutletLookup:
         record = get_outlet("https://www.rt.com/?utm_source=twitter&utm_medium=social")
         assert record is not None
         assert record.country == "RU"
+
+
+class TestSubdomainAudienceOverrides:
+    """Regression: specific subdomain entries must beat parent-domain walk-up.
+
+    The lookup in get_outlet() tries the full normalized hostname first, THEN
+    walks up. So adding a more-specific subdomain entry to outlets.json is all
+    it takes to override the parent's audience classification — no code change.
+
+    These tests pin the Post-Phase-4 behavior observed in the real Supabase
+    data, where foreign-language editions of Chinese state media were
+    incorrectly rolling up to the DOMESTIC parent.
+    """
+
+    def test_russian_rt_is_domestic_not_international(self):
+        # Parent rt.com is INTERNATIONAL; russian.rt.com serves Russian-speakers
+        # so it should resolve as DOMESTIC, not walk up to INTERNATIONAL.
+        record = get_outlet("russian.rt.com")
+        assert record is not None
+        assert record.audience_type == "DOMESTIC"
+        assert record.country == "RU"
+
+    def test_french_xinhuanet_is_international_not_domestic(self):
+        # Parent xinhuanet.com is DOMESTIC; French edition targets foreign
+        # audiences and should override to INTERNATIONAL.
+        record = get_outlet("french.xinhuanet.com")
+        assert record is not None
+        assert record.audience_type == "INTERNATIONAL"
+        assert record.country == "CN"
+        assert "fr" in record.languages
+
+    def test_arabic_xinhuanet_is_international(self):
+        record = get_outlet("arabic.xinhuanet.com")
+        assert record is not None
+        assert record.audience_type == "INTERNATIONAL"
+        assert "ar" in record.languages
+
+    def test_japanese_xinhuanet_is_international(self):
+        record = get_outlet("japanese.xinhuanet.com")
+        assert record is not None
+        assert record.audience_type == "INTERNATIONAL"
+        assert "ja" in record.languages
+
+    def test_russian_xinhuanet_is_international(self):
+        record = get_outlet("russian.xinhuanet.com")
+        assert record is not None
+        assert record.audience_type == "INTERNATIONAL"
+        assert "ru" in record.languages
+
+    def test_spanish_xinhuanet_is_international(self):
+        record = get_outlet("spanish.xinhuanet.com")
+        assert record is not None
+        assert record.audience_type == "INTERNATIONAL"
+        assert "es" in record.languages
+
+    def test_xinhua_news_cn_language_editions_are_international(self):
+        # Parent news.cn is DOMESTIC; language editions are INTERNATIONAL.
+        for subdomain, lang in [
+            ("french.news.cn", "fr"),
+            ("arabic.news.cn", "ar"),
+            ("russian.news.cn", "ru"),
+            ("japanese.news.cn", "ja"),
+            ("portuguese.news.cn", "pt"),
+        ]:
+            record = get_outlet(subdomain)
+            assert record is not None, f"{subdomain} not found"
+            assert record.audience_type == "INTERNATIONAL", f"{subdomain} audience"
+            assert lang in record.languages, f"{subdomain} language"
+
+    def test_deutsch_rt_reclassified_international(self):
+        # Was previously DIASPORA, which was a judgement error — RT DE is
+        # explicitly outward-facing German-language propaganda and belongs
+        # in the same INTERNATIONAL bucket as arabic.rt.com and francais.rt.com.
+        record = get_outlet("deutsch.rt.com")
+        assert record is not None
+        assert record.audience_type == "INTERNATIONAL"
+
+    def test_parent_domains_unchanged_by_overrides(self):
+        # Regression guard: the DOMESTIC parent entries must still be DOMESTIC.
+        # If someone ever accidentally flips these, every Chinese subdomain
+        # walk-up changes behavior for sites we haven't registered explicitly.
+        assert get_outlet("xinhuanet.com").audience_type == "DOMESTIC"
+        assert get_outlet("news.cn").audience_type == "DOMESTIC"
+        assert get_outlet("people.com.cn").audience_type == "DOMESTIC"
+        assert get_outlet("cctv.com").audience_type == "DOMESTIC"
+        assert get_outlet("rt.com").audience_type == "INTERNATIONAL"
+
+    def test_unregistered_subdomain_still_walks_up(self):
+        # edu.people.com.cn isn't explicitly registered — it should walk up
+        # to people.com.cn → DOMESTIC. Confirms the override pattern doesn't
+        # break the fallback walk-up for entries without a specific override.
+        record = get_outlet("edu.people.com.cn")
+        assert record is not None
+        assert record.audience_type == "DOMESTIC"
+        assert record.country == "CN"
+
+    def test_regional_chinadaily_walks_up_to_international(self):
+        # africa.chinadaily.com.cn has no explicit entry; parent chinadaily.com.cn
+        # is already INTERNATIONAL, so walk-up gives us the right answer for free.
+        for subdomain in (
+            "africa.chinadaily.com.cn",
+            "europe.chinadaily.com.cn",
+            "usa.chinadaily.com.cn",
+            "asia.chinadaily.com.cn",
+        ):
+            record = get_outlet(subdomain)
+            assert record is not None, f"{subdomain} missing"
+            assert record.audience_type == "INTERNATIONAL", f"{subdomain} bucket"
+            assert record.country == "CN"
