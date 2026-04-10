@@ -13,8 +13,14 @@
       "confidence": "0.0-1.0 reliability of classification"
     },
     "version": "1.0",
-    "fvey_exclusion": ["US", "GB", "CA", "AU", "NZ"],
-    "outlet_count_target": 150
+    "fvey_exclusion": [
+      "US",
+      "GB",
+      "CA",
+      "AU",
+      "NZ"
+    ],
+    "outlet_count_target": 300
   },
   "outlets": [
     {
@@ -23,7 +29,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RT (English)",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -34,7 +42,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RT en Espanol",
       "outlet_type": "TV",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -45,7 +55,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RT France",
       "outlet_type": "TV",
-      "languages": ["fr"],
+      "languages": [
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -56,7 +68,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RT Arabic",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -67,7 +81,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RT DE",
       "outlet_type": "TV",
-      "languages": ["de"],
+      "languages": [
+        "de"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -78,7 +94,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "RT (Russian)",
       "outlet_type": "TV",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -89,7 +107,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "TASS English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -100,7 +120,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "TASS",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -111,7 +133,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "RIA Novosti",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -122,7 +146,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Sputnik English",
       "outlet_type": "DIGITAL",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -133,7 +159,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Sputnik Mundo",
       "outlet_type": "DIGITAL",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -144,7 +172,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Sputnik Globe",
       "outlet_type": "DIGITAL",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -155,7 +185,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Channel One Russia",
       "outlet_type": "TV",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -166,7 +198,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Vesti / VGTRK",
       "outlet_type": "TV",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -177,7 +211,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Rossiya 1",
       "outlet_type": "TV",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -188,7 +224,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Izvestia",
       "outlet_type": "NEWSPAPER",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.85
@@ -199,10 +237,12 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Tsargrad TV",
       "outlet_type": "DIGITAL",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.80
+      "confidence": 0.8
     },
     {
       "domain": "regnum.ru",
@@ -210,7 +250,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Regnum News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.75
@@ -221,7 +263,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Xinhua",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["zh"],
+      "languages": [
+        "zh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -232,7 +276,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -243,7 +289,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Xinhuanet",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["zh"],
+      "languages": [
+        "zh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -254,7 +302,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua Spanish",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -265,7 +315,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua French",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fr"],
+      "languages": [
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -276,7 +328,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua Arabic",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -287,7 +341,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua Russian",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -298,7 +354,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua Japanese",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ja"],
+      "languages": [
+        "ja"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -309,7 +367,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhua Portuguese",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["pt"],
+      "languages": [
+        "pt"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -320,7 +380,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhuanet French",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fr"],
+      "languages": [
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -331,7 +393,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhuanet Arabic",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -342,7 +406,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhuanet Japanese",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ja"],
+      "languages": [
+        "ja"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -353,7 +419,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhuanet Russian",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ru"],
+      "languages": [
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -364,7 +432,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Xinhuanet Spanish",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -375,7 +445,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "CGTN",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -386,7 +458,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "CGTN Espanol",
       "outlet_type": "TV",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -397,7 +471,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "CGTN Francais",
       "outlet_type": "TV",
-      "languages": ["fr"],
+      "languages": [
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -408,7 +484,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "CGTN Arabic",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -419,7 +497,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "CCTV",
       "outlet_type": "TV",
-      "languages": ["zh"],
+      "languages": [
+        "zh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -430,7 +510,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "People's Daily",
       "outlet_type": "NEWSPAPER",
-      "languages": ["zh"],
+      "languages": [
+        "zh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -441,7 +523,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "People's Daily English",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -452,7 +536,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Global Times",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -463,7 +549,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "China Daily",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -474,7 +562,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "China News Service",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["zh"],
+      "languages": [
+        "zh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -485,7 +575,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "ECNS English",
       "outlet_type": "DIGITAL",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -496,7 +588,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Press TV",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -507,7 +601,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "IRNA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fa"],
+      "languages": [
+        "fa"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -518,7 +614,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "IRNA English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -529,7 +627,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Fars News",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fa"],
+      "languages": [
+        "fa"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -540,7 +640,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Fars News English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -551,10 +653,12 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Tasnim News",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fa"],
+      "languages": [
+        "fa"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.90
+      "confidence": 0.9
     },
     {
       "domain": "isna.ir",
@@ -562,7 +666,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "ISNA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fa"],
+      "languages": [
+        "fa"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -573,7 +679,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Mehr News",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fa"],
+      "languages": [
+        "fa"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -584,7 +692,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Mehr News English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -595,7 +705,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Tehran Times",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.85
@@ -606,7 +718,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Al Alam",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -617,7 +731,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Al Mayadeen",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.75
@@ -628,7 +744,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "KCNA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ko"],
+      "languages": [
+        "ko"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -639,10 +757,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "KCNA Watch",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": false,
-      "confidence": 0.50
+      "confidence": 0.5
     },
     {
       "domain": "rodong.rep.kp",
@@ -650,7 +770,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Rodong Sinmun",
       "outlet_type": "NEWSPAPER",
-      "languages": ["ko"],
+      "languages": [
+        "ko"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -661,7 +783,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "TRT World",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -672,7 +796,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "TRT Haber",
       "outlet_type": "TV",
-      "languages": ["tr"],
+      "languages": [
+        "tr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -683,7 +809,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Anadolu Agency (Turkish)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["tr"],
+      "languages": [
+        "tr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -694,7 +822,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Anadolu Agency English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -705,7 +835,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Daily Sabah",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.85
@@ -716,7 +848,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Al Jazeera English",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -727,7 +861,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Al Jazeera Arabic",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -738,7 +874,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Qatar News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "en"],
+      "languages": [
+        "ar",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -749,7 +888,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "AJ+",
       "outlet_type": "DIGITAL",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -760,10 +901,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Al Arabiya",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.90
+      "confidence": 0.9
     },
     {
       "domain": "english.alarabiya.net",
@@ -771,10 +914,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Al Arabiya English",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.90
+      "confidence": 0.9
     },
     {
       "domain": "spa.gov.sa",
@@ -782,7 +927,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Saudi Press Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -793,7 +940,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Arab News",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.85
@@ -804,7 +953,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "WAM (Emirates News Agency)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "en"],
+      "languages": [
+        "ar",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -815,10 +967,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "The National",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.80
+      "confidence": 0.8
     },
     {
       "domain": "skynewsarabia.com",
@@ -826,10 +980,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Sky News Arabia",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.80
+      "confidence": 0.8
     },
     {
       "domain": "ahram.org.eg",
@@ -837,7 +993,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Al-Ahram",
       "outlet_type": "NEWSPAPER",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -848,7 +1006,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Ahram Online",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -859,7 +1019,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Middle East News Agency (MENA)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -870,7 +1032,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "TeleSUR",
       "outlet_type": "TV",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -881,7 +1045,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "TeleSUR English",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -892,7 +1058,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "VTV",
       "outlet_type": "TV",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -903,7 +1071,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Correo del Orinoco",
       "outlet_type": "NEWSPAPER",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -914,7 +1084,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Granma",
       "outlet_type": "NEWSPAPER",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -925,7 +1097,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Granma International",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -936,7 +1110,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Prensa Latina",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -947,10 +1123,12 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Cubadebate",
       "outlet_type": "DIGITAL",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
-      "confidence": 0.90
+      "confidence": 0.9
     },
     {
       "domain": "ptvnews.ph",
@@ -958,7 +1136,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "PTV News (Philippines)",
       "outlet_type": "TV",
-      "languages": ["en", "tl"],
+      "languages": [
+        "en",
+        "tl"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -969,7 +1150,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Philippine News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en", "tl"],
+      "languages": [
+        "en",
+        "tl"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -980,7 +1164,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "PTV (Pakistan TV)",
       "outlet_type": "TV",
-      "languages": ["ur", "en"],
+      "languages": [
+        "ur",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -991,7 +1178,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Associated Press of Pakistan",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ur", "en"],
+      "languages": [
+        "ur",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1002,7 +1192,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Radio Pakistan",
       "outlet_type": "RADIO",
-      "languages": ["ur"],
+      "languages": [
+        "ur"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1013,7 +1205,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "DD News",
       "outlet_type": "TV",
-      "languages": ["hi", "en"],
+      "languages": [
+        "hi",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1024,7 +1219,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Doordarshan",
       "outlet_type": "TV",
-      "languages": ["hi", "en"],
+      "languages": [
+        "hi",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1035,7 +1233,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "All India Radio (AIR)",
       "outlet_type": "RADIO",
-      "languages": ["hi", "en"],
+      "languages": [
+        "hi",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1046,7 +1247,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Kan (Israeli Public Broadcasting)",
       "outlet_type": "TV",
-      "languages": ["he"],
+      "languages": [
+        "he"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1057,7 +1260,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "WAFA News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1068,7 +1273,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "WAFA English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1079,7 +1286,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Iraqi News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -1090,7 +1299,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Al Iraqiya",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1101,7 +1312,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "SANA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1112,7 +1325,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "SANA English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1123,7 +1338,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Petra News (Jordan)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "en"],
+      "languages": [
+        "ar",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1134,7 +1352,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "KUNA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "en"],
+      "languages": [
+        "ar",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1145,7 +1366,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Bahrain News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "en"],
+      "languages": [
+        "ar",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1156,7 +1380,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Oman News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "en"],
+      "languages": [
+        "ar",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1167,10 +1394,12 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Saba News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
-      "confidence": 0.90
+      "confidence": 0.9
     },
     {
       "domain": "almasirah.net",
@@ -1178,7 +1407,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Al-Masirah",
       "outlet_type": "TV",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.85
@@ -1189,7 +1420,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Tunis Afrique Presse",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "fr"],
+      "languages": [
+        "ar",
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1200,7 +1434,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Algerie Presse Service",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "fr", "en"],
+      "languages": [
+        "ar",
+        "fr",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1211,7 +1449,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Maghreb Arabe Presse",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar", "fr", "en"],
+      "languages": [
+        "ar",
+        "fr",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1222,7 +1464,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Sudan News Agency (SUNA)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ar"],
+      "languages": [
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1233,7 +1477,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Ethiopian News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["am", "en"],
+      "languages": [
+        "am",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1244,10 +1491,13 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Fana Broadcasting",
       "outlet_type": "TV",
-      "languages": ["am", "en"],
+      "languages": [
+        "am",
+        "en"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
-      "confidence": 0.80
+      "confidence": 0.8
     },
     {
       "domain": "shabait.com",
@@ -1255,7 +1505,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Shabait (Eritrea Information)",
       "outlet_type": "DIGITAL",
-      "languages": ["en", "ti", "ar"],
+      "languages": [
+        "en",
+        "ti",
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1266,7 +1520,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "News Agency of Nigeria",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1277,7 +1533,12 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "SABC",
       "outlet_type": "TV",
-      "languages": ["en", "af", "zu", "xh"],
+      "languages": [
+        "en",
+        "af",
+        "zu",
+        "xh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1288,7 +1549,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "SABC News",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1299,7 +1562,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Kenya Broadcasting Corporation",
       "outlet_type": "TV",
-      "languages": ["en", "sw"],
+      "languages": [
+        "en",
+        "sw"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1310,7 +1576,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "BelTA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["be", "ru"],
+      "languages": [
+        "be",
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1321,7 +1590,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "BelTA English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1332,7 +1603,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Ukrinform International",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1343,7 +1616,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Ukrinform",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["uk"],
+      "languages": [
+        "uk"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1354,7 +1629,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Vietnam News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["vi"],
+      "languages": [
+        "vi"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1365,7 +1642,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Vietnam+",
       "outlet_type": "DIGITAL",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1376,7 +1655,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Nhan Dan",
       "outlet_type": "NEWSPAPER",
-      "languages": ["vi"],
+      "languages": [
+        "vi"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1387,7 +1668,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "VOV World",
       "outlet_type": "RADIO",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1398,7 +1681,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Lao News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["lo", "en", "fr"],
+      "languages": [
+        "lo",
+        "en",
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1409,7 +1696,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Agence Kampuchea Press",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["km", "en", "fr"],
+      "languages": [
+        "km",
+        "en",
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1420,7 +1711,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Myanmar News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["my", "en"],
+      "languages": [
+        "my",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1431,7 +1725,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Global New Light of Myanmar",
       "outlet_type": "NEWSPAPER",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1442,7 +1738,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Antara",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["id"],
+      "languages": [
+        "id"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1453,7 +1751,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Antara English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1464,7 +1764,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Bernama",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ms", "en"],
+      "languages": [
+        "ms",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1475,7 +1778,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "CNA",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1486,7 +1791,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Kazinform",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["kk", "ru"],
+      "languages": [
+        "kk",
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1497,7 +1805,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Kazinform English",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1508,7 +1818,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "UzA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["uz"],
+      "languages": [
+        "uz"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1519,7 +1831,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Turkmen Dowlet Habarlary",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["tk"],
+      "languages": [
+        "tk"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1530,7 +1844,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Khovar",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["tg", "ru"],
+      "languages": [
+        "tg",
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1541,7 +1858,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Kabar",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ky", "ru"],
+      "languages": [
+        "ky",
+        "ru"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1552,7 +1872,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Armenpress",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["hy", "ru", "en"],
+      "languages": [
+        "hy",
+        "ru",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1563,7 +1887,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "AZERTAC",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["az", "ru", "en"],
+      "languages": [
+        "az",
+        "ru",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1574,7 +1902,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "AGERPRES",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ro"],
+      "languages": [
+        "ro"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1585,7 +1915,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "BTA",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["bg", "en"],
+      "languages": [
+        "bg",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1596,7 +1929,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "TVP World",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1607,7 +1942,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Polish Press Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["pl"],
+      "languages": [
+        "pl"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1618,7 +1955,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "MTI Hungarian News Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["hu"],
+      "languages": [
+        "hu"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1629,7 +1968,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Radio Television of Serbia",
       "outlet_type": "TV",
-      "languages": ["sr"],
+      "languages": [
+        "sr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1640,7 +1981,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Anadolu Ajansi",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["tr"],
+      "languages": [
+        "tr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1651,7 +1994,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "France 24",
       "outlet_type": "TV",
-      "languages": ["en", "fr", "ar", "es"],
+      "languages": [
+        "en",
+        "fr",
+        "ar",
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1662,7 +2010,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RFI",
       "outlet_type": "RADIO",
-      "languages": ["fr"],
+      "languages": [
+        "fr"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1673,7 +2023,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "RFI English",
       "outlet_type": "RADIO",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1684,7 +2036,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "AFP",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["fr", "en"],
+      "languages": [
+        "fr",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1695,7 +2050,12 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Deutsche Welle",
       "outlet_type": "TV",
-      "languages": ["en", "de", "es", "ar"],
+      "languages": [
+        "en",
+        "de",
+        "es",
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1706,7 +2066,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "NHK",
       "outlet_type": "TV",
-      "languages": ["ja"],
+      "languages": [
+        "ja"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1717,7 +2079,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "NHK World",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1728,7 +2092,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "KBS",
       "outlet_type": "TV",
-      "languages": ["ko"],
+      "languages": [
+        "ko"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1739,7 +2105,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "KBS World",
       "outlet_type": "TV",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1750,7 +2118,9 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Focus Taiwan",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["en"],
+      "languages": [
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1761,7 +2131,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Central News Agency (Taiwan)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["zh"],
+      "languages": [
+        "zh"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1772,7 +2144,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Montsame",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["mn", "en"],
+      "languages": [
+        "mn",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1783,7 +2158,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Bangladesh Sangbad Sangstha",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["bn", "en"],
+      "languages": [
+        "bn",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -1794,7 +2172,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "BTV (Bangladesh)",
       "outlet_type": "TV",
-      "languages": ["bn"],
+      "languages": [
+        "bn"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1805,10 +2185,13 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Rastriya Samachar Samiti (Nepal)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["ne", "en"],
+      "languages": [
+        "ne",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
-      "confidence": 0.90
+      "confidence": 0.9
     },
     {
       "domain": "rupavahini.lk",
@@ -1816,7 +2199,11 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Sri Lanka Rupavahini",
       "outlet_type": "TV",
-      "languages": ["si", "ta", "en"],
+      "languages": [
+        "si",
+        "ta",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1827,7 +2214,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Telam (Argentina)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1838,7 +2227,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Agencia Brasil",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["pt"],
+      "languages": [
+        "pt"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1849,7 +2240,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "TV Brasil",
       "outlet_type": "TV",
-      "languages": ["pt"],
+      "languages": [
+        "pt"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1860,7 +2253,10 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Andina (Peru)",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["es", "en"],
+      "languages": [
+        "es",
+        "en"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0
@@ -1871,7 +2267,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "Bolivian Information Agency",
       "outlet_type": "NEWS_AGENCY",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -1882,7 +2280,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "TVN (Chile)",
       "outlet_type": "TV",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 0.95
@@ -1893,7 +2293,9 @@
       "audience_type": "DOMESTIC",
       "outlet_name": "El 19 Digital",
       "outlet_type": "DIGITAL",
-      "languages": ["es"],
+      "languages": [
+        "es"
+      ],
       "is_state_owned": false,
       "is_state_aligned": true,
       "confidence": 0.85
@@ -1904,7 +2306,1737 @@
       "audience_type": "INTERNATIONAL",
       "outlet_name": "Vatican News",
       "outlet_type": "DIGITAL",
-      "languages": ["it", "en", "es", "fr", "de"],
+      "languages": [
+        "it",
+        "en",
+        "es",
+        "fr",
+        "de"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "irib.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Islamic Republic of Iran Broadcasting",
+      "outlet_type": "TV",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "iribnews.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "IRIB News",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "yjc.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Young Journalists Club",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "mashreghnews.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Mashregh News",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "khamenei.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Office of the Supreme Leader",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "fa",
+        "en",
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "president.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Presidency of the Islamic Republic of Iran",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "khabaronline.ir",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Khabar Online",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "borna.news",
+      "country": "IR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Borna News",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "fa"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "farsnews.com",
+      "country": "IR",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Fars News Agency (English)",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.95
+    },
+    {
+      "domain": "en.tasnimnews.com",
+      "country": "IR",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Tasnim News Agency (English)",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.95
+    },
+    {
+      "domain": "uriminzokkiri.com",
+      "country": "KP",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Uriminzokkiri",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "ko",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "naenara.com.kp",
+      "country": "KP",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Naenara",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "ko",
+        "en",
+        "zh"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "kctv.tv",
+      "country": "KP",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Korean Central Television",
+      "outlet_type": "TV",
+      "languages": [
+        "ko"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "kcna.co.jp",
+      "country": "KP",
+      "audience_type": "DIASPORA",
+      "outlet_name": "KCNA (Japan mirror)",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "ja",
+        "ko"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "minju.rep.kp",
+      "country": "KP",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Minju Joson",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ko"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "radioreloj.cu",
+      "country": "CU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Radio Reloj",
+      "outlet_type": "RADIO",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "juventudrebelde.cu",
+      "country": "CU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Juventud Rebelde",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "rhc.cu",
+      "country": "CU",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Radio Habana Cuba",
+      "outlet_type": "RADIO",
+      "languages": [
+        "es",
+        "en",
+        "fr",
+        "pt"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "bohemia.cu",
+      "country": "CU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Bohemia",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "cubavision.icrt.cu",
+      "country": "CU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Cubavisión",
+      "outlet_type": "TV",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "sb.by",
+      "country": "BY",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Sovetskaya Belorussiya",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ru",
+        "be"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ctv.by",
+      "country": "BY",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Capital TV",
+      "outlet_type": "TV",
+      "languages": [
+        "ru",
+        "be"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ont.by",
+      "country": "BY",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "ONT",
+      "outlet_type": "TV",
+      "languages": [
+        "ru",
+        "be"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "belarus24.by",
+      "country": "BY",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Belarus 24",
+      "outlet_type": "TV",
+      "languages": [
+        "ru",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "belarus.by",
+      "country": "BY",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Official Belarus Portal",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "en",
+        "ru",
+        "be"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ultimasnoticias.com.ve",
+      "country": "VE",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Últimas Noticias",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "minci.gob.ve",
+      "country": "VE",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Ministry of Communication and Information",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "patria.org.ve",
+      "country": "VE",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Patria",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 0.9
+    },
+    {
+      "domain": "tishreen.news.sy",
+      "country": "SY",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Tishreen",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "cham-press.com",
+      "country": "SY",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Cham Press",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "alwatan.sy",
+      "country": "SY",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al-Watan",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "africa.chinadaily.com.cn",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "China Daily Africa",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "europe.chinadaily.com.cn",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "China Daily Europe",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "usa.chinadaily.com.cn",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "China Daily USA",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "asia.chinadaily.com.cn",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "China Daily Asia",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "english.cctv.com",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "CCTV English",
+      "outlet_type": "TV",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "china.org.cn",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "China.org.cn",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "en",
+        "zh",
+        "fr",
+        "es",
+        "de",
+        "ar",
+        "ru",
+        "ja"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "81.cn",
+      "country": "CN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "PLA Daily",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "zh"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "gmw.cn",
+      "country": "CN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Guangming Daily",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "zh"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "bjreview.com.cn",
+      "country": "CN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Beijing Review",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "kp.ru",
+      "country": "RU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Komsomolskaya Pravda",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ru"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "mk.ru",
+      "country": "RU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Moskovsky Komsomolets",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ru"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "ren.tv",
+      "country": "RU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "REN TV",
+      "outlet_type": "TV",
+      "languages": [
+        "ru"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "ntv.ru",
+      "country": "RU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "NTV",
+      "outlet_type": "TV",
+      "languages": [
+        "ru"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.95
+    },
+    {
+      "domain": "zvezda.ru",
+      "country": "RU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Zvezda TV",
+      "outlet_type": "TV",
+      "languages": [
+        "ru"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "interfax.ru",
+      "country": "RU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Interfax",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "ru"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "trt.net.tr",
+      "country": "TR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "TRT",
+      "outlet_type": "TV",
+      "languages": [
+        "tr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "sabah.com.tr",
+      "country": "TR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Sabah",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "tr"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "yenisafak.com",
+      "country": "TR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Yeni Safak",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "tr"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "star.com.tr",
+      "country": "TR",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Star",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "tr"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "trtarabi.com",
+      "country": "TR",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "TRT Arabi",
+      "outlet_type": "TV",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "al-riyadh.com",
+      "country": "SA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Riyadh",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "okaz.com.sa",
+      "country": "SA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Okaz",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "alyaum.com",
+      "country": "SA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Yaum",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "al-ekhbariya.tv",
+      "country": "SA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Ekhbariya",
+      "outlet_type": "TV",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ajel.sa",
+      "country": "SA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Ajel",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "gulfnews.com",
+      "country": "AE",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Gulf News",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "khaleejtimes.com",
+      "country": "AE",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Khaleej Times",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "alittihad.ae",
+      "country": "AE",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Ittihad",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "albayan.ae",
+      "country": "AE",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Bayan",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "alwatan.com.qa",
+      "country": "QA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Watan",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "alsharq.net.qa",
+      "country": "QA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Sharq",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "al-raya.com",
+      "country": "QA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Raya",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "gulf-times.com",
+      "country": "QA",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Gulf Times",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "sis.gov.eg",
+      "country": "EG",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "State Information Service",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "ar",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "elmoudjahid.dz",
+      "country": "DZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "El Moudjahid",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "fr",
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "entv.dz",
+      "country": "DZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "ENTV",
+      "outlet_type": "TV",
+      "languages": [
+        "ar",
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "radioalgerie.dz",
+      "country": "DZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Radio Algérie",
+      "outlet_type": "RADIO",
+      "languages": [
+        "ar",
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "watania.tn",
+      "country": "TN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Wataniya TV",
+      "outlet_type": "TV",
+      "languages": [
+        "ar",
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "lapresse.tn",
+      "country": "TN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "La Presse",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "snrtnews.com",
+      "country": "MA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "SNRT News",
+      "outlet_type": "TV",
+      "languages": [
+        "ar",
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "lematin.ma",
+      "country": "MA",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Le Matin",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "walta.et",
+      "country": "ET",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Walta Information Centre",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "am",
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "addiszemen.org.et",
+      "country": "ET",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Addis Zemen",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "am"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ebc.et",
+      "country": "ET",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Ethiopian Broadcasting Corporation",
+      "outlet_type": "TV",
+      "languages": [
+        "am",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "press.et",
+      "country": "ET",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Ethiopian Press Agency",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "am",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "herald.co.zw",
+      "country": "ZW",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "The Herald",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "chronicle.co.zw",
+      "country": "ZW",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Chronicle",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "sundaymail.co.zw",
+      "country": "ZW",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Sunday Mail",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "zbc.co.zw",
+      "country": "ZW",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "ZBC",
+      "outlet_type": "TV",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "newziana.co.zw",
+      "country": "ZW",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "New Ziana",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "angop.ao",
+      "country": "AO",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "ANGOP",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "pt",
+        "en",
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "jornaldeangola.ao",
+      "country": "AO",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Jornal de Angola",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "pt"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "tpa.ao",
+      "country": "AO",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "TPA",
+      "outlet_type": "TV",
+      "languages": [
+        "pt"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "aim.org.mz",
+      "country": "MZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Agência de Informação de Moçambique",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "pt",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "tvm.co.mz",
+      "country": "MZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Televisão de Moçambique",
+      "outlet_type": "TV",
+      "languages": [
+        "pt"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "jornalnoticias.co.mz",
+      "country": "MZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Jornal Notícias",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "pt"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "dailynews.co.tz",
+      "country": "TZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Daily News Tanzania",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "tbc.go.tz",
+      "country": "TZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Tanzania Broadcasting Corporation",
+      "outlet_type": "TV",
+      "languages": [
+        "sw",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "rba.co.rw",
+      "country": "RW",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Rwanda Broadcasting Agency",
+      "outlet_type": "TV",
+      "languages": [
+        "rw",
+        "en",
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "newtimes.co.rw",
+      "country": "RW",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "The New Times",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "znbc.co.zm",
+      "country": "ZM",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "ZNBC",
+      "outlet_type": "TV",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "times.co.zm",
+      "country": "ZM",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Times of Zambia",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "newvision.co.ug",
+      "country": "UG",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "New Vision",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ubctv.co.ug",
+      "country": "UG",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Uganda Broadcasting Corporation",
+      "outlet_type": "TV",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ortm.ml",
+      "country": "ML",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "ORTM",
+      "outlet_type": "TV",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "essor.ml",
+      "country": "ML",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "L'Essor",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "sidwaya.info",
+      "country": "BF",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Sidwaya",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "rts.sn",
+      "country": "SN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Radiodiffusion Télévision Sénégalaise",
+      "outlet_type": "TV",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "aps.sn",
+      "country": "SN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Agence de Presse Sénégalaise",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "fr"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "graphic.com.gh",
+      "country": "GH",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Daily Graphic",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "gbcghana.com",
+      "country": "GH",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Ghana Broadcasting Corporation",
+      "outlet_type": "TV",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "khabar.kz",
+      "country": "KZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Khabar TV",
+      "outlet_type": "TV",
+      "languages": [
+        "kk",
+        "ru"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "egemen.kz",
+      "country": "KZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Egemen Kazakhstan",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "kk"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "vietnamnet.vn",
+      "country": "VN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "VietnamNet",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "vi"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "vtv.vn",
+      "country": "VN",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Vietnam Television",
+      "outlet_type": "TV",
+      "languages": [
+        "vi"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "ubpost.mn",
+      "country": "MN",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "UB Post",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "vientianetimes.org.la",
+      "country": "LA",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Vientiane Times",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "freshnewsasia.com",
+      "country": "KH",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Fresh News",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "km",
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "gnlm.com.mm",
+      "country": "MM",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Global New Light of Myanmar",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "mitv.com.mm",
+      "country": "MM",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "MITV",
+      "outlet_type": "TV",
+      "languages": [
+        "my"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "tanjug.rs",
+      "country": "RS",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Tanjug",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "sr",
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "politika.rs",
+      "country": "RS",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Politika",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "sr"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "hirado.hu",
+      "country": "HU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Híradó",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "hu"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "origo.hu",
+      "country": "HU",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Origo",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "hu"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.85
+    },
+    {
+      "domain": "apa.az",
+      "country": "AZ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "APA",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "az",
+        "en",
+        "ru"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "azernews.az",
+      "country": "AZ",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "AzerNews",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "nta.ng",
+      "country": "NG",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Nigerian Television Authority",
+      "outlet_type": "TV",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "frcn.gov.ng",
+      "country": "NG",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Federal Radio Corporation of Nigeria",
+      "outlet_type": "RADIO",
+      "languages": [
+        "en"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "tvri.go.id",
+      "country": "ID",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "TVRI",
+      "outlet_type": "TV",
+      "languages": [
+        "id"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "rtvm.gov.ph",
+      "country": "PH",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Radio Television Malacañang",
+      "outlet_type": "TV",
+      "languages": [
+        "en",
+        "tl"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "jrtv.jo",
+      "country": "JO",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Jordan Radio and Television",
+      "outlet_type": "TV",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "nna-leb.gov.lb",
+      "country": "LB",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "National News Agency",
+      "outlet_type": "NEWS_AGENCY",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "1tv.am",
+      "country": "AM",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Public Television of Armenia",
+      "outlet_type": "TV",
+      "languages": [
+        "hy"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "palestinetv.tv",
+      "country": "PS",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Palestine TV",
+      "outlet_type": "TV",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "alsabaah.iq",
+      "country": "IQ",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Al Sabaah",
+      "outlet_type": "NEWSPAPER",
+      "languages": [
+        "ar"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "canal4.com.ni",
+      "country": "NI",
+      "audience_type": "DOMESTIC",
+      "outlet_name": "Canal 4",
+      "outlet_type": "TV",
+      "languages": [
+        "es"
+      ],
+      "is_state_owned": false,
+      "is_state_aligned": true,
+      "confidence": 0.9
+    },
+    {
+      "domain": "turkmenistan.gov.tm",
+      "country": "TM",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Turkmenistan Government Portal",
+      "outlet_type": "DIGITAL",
+      "languages": [
+        "tk",
+        "en",
+        "ru"
+      ],
+      "is_state_owned": true,
+      "is_state_aligned": false,
+      "confidence": 1.0
+    },
+    {
+      "domain": "eritreatv.com",
+      "country": "ER",
+      "audience_type": "INTERNATIONAL",
+      "outlet_name": "Eri-TV",
+      "outlet_type": "TV",
+      "languages": [
+        "ti",
+        "en",
+        "ar"
+      ],
       "is_state_owned": true,
       "is_state_aligned": false,
       "confidence": 1.0

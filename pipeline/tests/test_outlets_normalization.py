@@ -257,3 +257,69 @@ class TestSubdomainAudienceOverrides:
             assert record is not None, f"{subdomain} missing"
             assert record.audience_type == "INTERNATIONAL", f"{subdomain} bucket"
             assert record.country == "CN"
+
+
+class TestTier2CountryCoverage:
+    """B8 expansion: verify minimum outlet coverage for locked-down + Tier 2
+    countries. These are the countries where 2-4 outlets are not enough to
+    validate coordination or run meaningful baselines, so the B8 outlet
+    expansion commits explicit floors per country.
+
+    If any of these fail after future edits, either restore the missing
+    outlet or update the floor AND update this test + the B8 commit rationale.
+    """
+
+    # Map of ISO2 -> minimum number of registered outlets required.
+    # Floors are set low enough to allow pruning individual bad entries
+    # without breaking the test, but high enough to catch accidental removals.
+    TIER2_COVERAGE_FLOORS = {
+        "IR": 15,  # Iran — locked-down, expanded to 21
+        "KP": 6,   # DPRK — locked-down, expanded to 8
+        "CU": 6,   # Cuba — locked-down, expanded to 9
+        "BY": 5,   # Belarus — locked-down, expanded to 7
+        "VE": 5,   # Venezuela — locked-down, expanded to 7
+        "SY": 3,   # Syria — limited press freedom
+        "SA": 6,   # Saudi Arabia — Gulf, expanded to 9
+        "AE": 5,   # UAE — Gulf, expanded to 7
+        "QA": 6,   # Qatar — Gulf, expanded to 8
+        "TR": 8,   # Turkey — expanded to 11
+        "RU": 20,  # Russia — Tier 1 core, expanded to 24
+        "CN": 30,  # China — Tier 1 core, expanded to 34
+        "ZW": 5,   # Zimbabwe — new in B8
+        "AO": 3,   # Angola — new in B8
+        "MZ": 3,   # Mozambique — new in B8
+    }
+
+    def test_tier2_coverage_floors_met(self):
+        from src.outlets import get_all_outlets
+
+        from collections import Counter
+        countries = Counter(o.country for o in get_all_outlets())
+        failures = []
+        for iso2, floor in self.TIER2_COVERAGE_FLOORS.items():
+            actual = countries.get(iso2, 0)
+            if actual < floor:
+                failures.append(f"{iso2}: {actual} outlets (floor {floor})")
+        assert not failures, (
+            "Tier 2 country coverage below floor — did B8 additions get "
+            f"reverted?\n  " + "\n  ".join(failures)
+        )
+
+    def test_total_outlet_count_above_300(self):
+        """B8 expansion target: 172 -> 300+. Regression guard."""
+        from src.outlets import get_all_outlets
+        assert len(get_all_outlets()) >= 300
+
+    def test_minimum_country_coverage(self):
+        """B8 added entries for 11 new countries (ZW, AO, MZ, TZ, RW, ZM, UG,
+        ML, BF, SN, GH). Total monitored country count should be >= 80."""
+        from src.outlets import get_monitored_countries
+        assert len(get_monitored_countries()) >= 80
+
+    def test_new_tier2_countries_represented(self):
+        """Every new country added by B8 must have at least one outlet."""
+        from src.outlets import get_monitored_countries
+        monitored = get_monitored_countries()
+        new_countries = {"ZW", "AO", "MZ", "TZ", "RW", "ZM", "UG", "ML", "BF", "SN", "GH"}
+        missing = new_countries - monitored
+        assert not missing, f"New B8 countries missing from outlets.json: {missing}"
