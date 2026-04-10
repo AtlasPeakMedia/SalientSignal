@@ -190,8 +190,7 @@ export default async function AboutPage() {
 
       {/* Footer */}
       <footer className="max-w-[1400px] mx-auto px-6 py-6 text-xs text-text-secondary border-t border-bg-divider">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span>Atlas Peak Media, LLC · US/FVEY excluded</span>
+        <div className="flex items-center justify-end">
           <Link
             href="/"
             className="text-mono hover:text-text-body transition-colors"

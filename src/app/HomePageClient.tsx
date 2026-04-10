@@ -284,14 +284,7 @@ export default function HomePageClient({
 
       {/* Footer */}
       <footer className="max-w-[1400px] mx-auto px-6 py-6 text-xs text-text-secondary border-t border-bg-divider">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span>
-            Atlas Peak Media, LLC ·{" "}
-            {selectedRegions === null
-              ? `${countryActivity.length} countries with data`
-              : `${filteredCountryActivity.length} of ${countryActivity.length} countries (filtered)`}
-            {" "}· US/FVEY excluded
-          </span>
+        <div className="flex items-center justify-end">
           <span className="text-mono">
             {isDummy ? "DEMO DATA" : "LIVE DATA"} · <Clock />
           </span>
