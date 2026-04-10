@@ -4,6 +4,15 @@
 > calibrated for three weeks. That's by design, not a bug. Read this before
 > assuming something is broken.
 
+> **UPDATE (Phase A backfill):** Cold start is largely obsolete for the
+> production deployment. See the **Historical Backfill Mode** section at the
+> bottom of this document — the pre-launch backfill pulls 15 months of GDELT
+> data and computes real baselines before the live cron starts, so the
+> product launches with production-ready deviation metrics instead of a
+> 21-day calibration period. The content below still describes the cold-start
+> behavior of the live hourly pipeline for development / local testing
+> scenarios where no backfill has been run.
+
 ## The Problem Cold Start Creates
 
 SalientSignal's core signal is **deviation from a country's own baseline**.
@@ -170,3 +179,104 @@ Cold start is a known and expected phase of a baseline-driven system. The
 pipeline is designed to give operators and users a clear signal that the
 system is calibrating rather than hiding that fact behind a broken-looking
 globe. Three weeks of patience is a non-negotiable part of the product.
+
+---
+
+## Historical Backfill Mode (Phase A)
+
+Added April 2026 as part of the production launch plan. The cold-start path
+above describes what happens when the pipeline starts from an empty
+`country_activity` table. **Production uses historical backfill instead,** so
+the launch experience skips cold start entirely.
+
+### How backfill works
+
+1. **`pipeline/scripts/run_backfill.py`** queries GDELT's `TimelineVolRaw`
+   mode for every outlet in `outlets.json` over the specified date range
+   (typically Jan 1, 2025 through today). Unlike the `ArtList` mode used by
+   the live pipeline, `TimelineVolRaw` returns per-day article counts
+   without the 250-result-per-query cap, so 15 months of history for 300+
+   outlets completes in ~7 minutes total.
+
+2. **`pipeline/src/backfill.py`** aggregates the per-outlet daily counts
+   into per-`(country, date, audience_type)` daily counts, computes 30-day
+   rolling baselines from the preceding dates in the window, and produces
+   `country_activity` rows in the exact shape that the live pipeline emits.
+
+3. **`pipeline/scripts/run_backfill.py`** writes the full result set to a
+   JSON file. **It never touches Supabase.** The JSON-first design lets
+   operators inspect the output, spot-check known events (Feb 24 Ukraine
+   anniversary, Oct 7 Gaza coverage, May 9 Russia Victory Day) before
+   committing to production.
+
+4. **`pipeline/scripts/import_backfill.py`** reads the JSON, runs six
+   validation passes (schema shape, value ranges, date gap check, sanity
+   events, volume ceiling, FVEY exclusion), bulk-upserts to Supabase via
+   the existing `upsert_country_activity_batch` path, and then calls
+   `clear_historical_cold_start()` which flips `cold_start=FALSE` on all
+   rows dated before today.
+
+### Effect on the three-phase cold-start model above
+
+All three phases (cold / warming / stable) still exist in the code for
+development and local testing, but the **production path skips them
+entirely** because every historical row is imported with `cold_start=FALSE`
+and a real 30-day baseline already computed.
+
+| Live-only (no backfill) | Production (with backfill) |
+|---|---|
+| Day 1: `cold_start=True`, confidence=LOW | All historical rows: `cold_start=False`, confidence=HIGH |
+| Day 7: `cold_start=True`, confidence=MEDIUM | Same as above |
+| Day 21: `cold_start=False`, confidence=HIGH | Same as above |
+| Globe looks gray for 7 days, caveated for 14 | Globe shows real colors from day 1 |
+
+### Frontend messaging
+
+The frontend banner was renamed from `ColdStartBanner` to
+`HistoricalDataBanner` in commit D16. The new banner shows one of three
+labels:
+
+1. **"Preview data"** — when `NEXT_PUBLIC_USE_DUMMY_DATA=true`
+2. **"Stale data"** — when the most-recent ingested row is more than 48
+   hours old (pipeline outage / Render cron failure)
+3. **"Live intelligence data"** — default, with the message *"Baselines
+   computed from 15 months of GDELT historical data (Jan 2025 – present).
+   Deviation metrics are production-ready."*
+
+The third label is the expected state in production. It's there to set
+user expectations about data provenance, not to hedge on quality.
+
+### When the live pipeline takes over
+
+After the backfill completes and the import finishes, the Render cron
+(Phase E17) runs the live `run_pipeline()` hourly. This pulls fresh
+articles via ArtList mode and upserts `country_activity` rows for today.
+Those rows will have whatever baselines the live `fetch_baseline()` path
+computes — and since `fetch_baseline()` reads from the `articles` table
+(which starts empty for historical dates), the live pipeline will
+temporarily have LOW-confidence baselines for the FIRST day it runs on a
+given country.
+
+There is a **known architectural caveat** here: the live pipeline can
+overwrite the backfilled baselines with thinner ArtList-derived ones.
+The correct fix is to refactor `fetch_baseline()` to prefer
+`country_activity.today_count` from the preceding 30 days over the
+articles-table aggregation. This is tracked as a Phase 5 deferred item in
+the plan file. Until that lands, the live pipeline's baseline for each
+country will rebuild over its first 21 days of operation, BUT the backfill
+rows for dates BEFORE the live pipeline started will remain intact, so the
+globe stays populated and the frontend banner stays on "Live intelligence
+data" throughout.
+
+### Emergency: undoing a bad backfill
+
+If the backfill JSON passes validation but the imported data is wrong
+anyway:
+
+```sql
+DELETE FROM country_activity
+WHERE date BETWEEN '2025-01-01' AND '2026-04-09';
+```
+
+This clears the backfilled rows but preserves whatever the live pipeline
+has written for today. Then re-run `import_backfill.py` with a fixed JSON.

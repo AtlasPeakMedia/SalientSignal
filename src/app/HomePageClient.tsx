@@ -6,7 +6,7 @@ import Wordmark from "@/components/Brand/Wordmark";
 import ViewToggle from "@/components/Globe/ViewToggle";
 import ColorLegend from "@/components/Globe/ColorLegend";
 import GlobeWrapper from "@/components/Globe/GlobeWrapper";
-import ColdStartBanner from "@/components/ColdStartBanner";
+import HistoricalDataBanner from "@/components/HistoricalDataBanner";
 import type {
   CountryActivity,
   CoordinationArc,
@@ -21,7 +21,6 @@ interface Props {
   trendingThemes: TrendingTheme[];
   isDummy: boolean;
   latestDate: string | null;
-  coldStartCount: number;
 }
 
 export default function HomePageClient({
@@ -30,7 +29,6 @@ export default function HomePageClient({
   trendingThemes,
   isDummy,
   latestDate,
-  coldStartCount,
 }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>("BOTH");
 
@@ -67,8 +65,26 @@ export default function HomePageClient({
         day: "numeric",
       });
 
-  const showColdStart = coldStartCount > 0 || isDummy;
-  const headerBadge = isDummy ? "DEMO" : coldStartCount > 0 ? "COLD START" : "LIVE";
+  // D16: Post-backfill — the 21-day cold-start period is gone. The banner
+  // now shows for two reasons: (a) dummy data fixture is active, or (b)
+  // latestDate is stale relative to today (pipeline outage).
+  //
+  // latestDate is a YYYY-MM-DD string from the server. We treat anything
+  // older than 2 days as stale to account for timezone + hourly cron cadence.
+  const isStale = (() => {
+    if (isDummy || !latestDate) return false;
+    try {
+      const latest = new Date(latestDate + "T00:00:00Z").getTime();
+      const now = Date.now();
+      const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+      return now - latest > twoDaysMs;
+    } catch {
+      return false;
+    }
+  })();
+
+  const showBanner = isDummy || isStale;
+  const headerBadge = isDummy ? "DEMO" : "LIVE";
 
   return (
     <main className="min-h-screen">
@@ -96,8 +112,8 @@ export default function HomePageClient({
         </div>
       </header>
 
-      {/* Cold start banner */}
-      <ColdStartBanner show={showColdStart && !isDummy} />
+      {/* Historical-data / stale-data / dummy-preview banner (D16) */}
+      <HistoricalDataBanner show={showBanner} isDummy={isDummy} isStale={isStale} />
 
       {/* Globe controls */}
       <div className="max-w-[1400px] mx-auto px-6 pt-6 flex flex-wrap items-center justify-between gap-4">
@@ -108,14 +124,6 @@ export default function HomePageClient({
             </span>
             <span className="mx-2 text-bg-divider">•</span>
             <span className="text-mono">{dateLabel}</span>
-            {coldStartCount > 0 && !isDummy && (
-              <>
-                <span className="mx-2 text-bg-divider">•</span>
-                <span className="text-mono text-accent-tealBright">
-                  {coldStartCount} cold-start
-                </span>
-              </>
-            )}
           </h1>
         </div>
         <div className="flex items-center gap-4">
@@ -142,7 +150,7 @@ export default function HomePageClient({
               {isDummy ? "Biggest Movers Today" : "Most Active Countries"}
             </h2>
             <span className="text-xs text-text-secondary text-mono">
-              {coldStartCount > 0 && !isDummy ? "by article count" : "by z-score"}
+              by z-score
             </span>
           </div>
           {topMovers.length === 0 ? (

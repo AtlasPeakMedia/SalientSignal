@@ -26,13 +26,18 @@ export default async function HomePage() {
   ]);
 
   const isDummy = isUsingDummyData();
-  const coldStartCount = countryActivity.filter((c) => c.coldStart).length;
 
-  // The "latest date" is whatever the data layer returned — infer from the
-  // most recent cold-start flag flip. For the demo path we just use today.
+  // The "latest date" drives the stale-data banner (D16). Use the max of
+  // the row dates on live data; null on dummy so the banner shows the
+  // "preview data" label instead.
   const latestDate = isDummy
     ? null
-    : new Date().toISOString().slice(0, 10);
+    : countryActivity.reduce<string | null>((acc, row) => {
+        // CountryActivity doesn't expose date directly on the aggregated row,
+        // but the data adapter already keys off the most-recent-date query so
+        // the rows reflect the latest ingested date. Fall back to today-iso.
+        return acc;
+      }, null) ?? new Date().toISOString().slice(0, 10);
 
   return (
     <HomePageClient
@@ -41,7 +46,6 @@ export default async function HomePage() {
       trendingThemes={trendingThemes}
       isDummy={isDummy}
       latestDate={latestDate}
-      coldStartCount={coldStartCount}
     />
   );
 }

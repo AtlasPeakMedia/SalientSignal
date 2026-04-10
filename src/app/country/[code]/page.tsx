@@ -68,17 +68,11 @@ export default async function CountryPage({ params }: PageProps) {
           })}
           . Compare what {country.name}&apos;s state outlets are publishing for
           domestic audiences versus international audiences. Baselines are
-          30-day rolling averages.
+          30-day rolling averages from 15 months of historical GDELT data.
         </p>
-        {country.coldStart && (
-          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-bg-divider text-xs text-text-secondary">
-            <span
-              aria-hidden="true"
-              className="inline-block h-1.5 w-1.5 rounded-full bg-accent-tealBright animate-pulse"
-            />
-            Baseline calibrating — deviation metrics are suppressed until ~day 21.
-          </div>
-        )}
+        {/* D16: The "Baseline calibrating" inline badge was removed after the
+            historical backfill (Phase A) populated 15 months of real baselines.
+            Per-row cold_start is always false on historical data post-import. */}
       </section>
 
       {/* Audience split */}
