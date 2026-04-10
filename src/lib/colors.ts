@@ -8,8 +8,8 @@ import type { DeviationLevel } from "./types";
 export const DEVIATION_COLORS: Record<DeviationLevel, string> = {
   deepBlue: "#1A3A5C",   // Significant silence
   steelBlue: "#4A7FB5",  // Unusually quiet
-  coolGray: "#2F3A50",   // Slightly below normal (slight lift from near-black)
-  neutral: "#3F5070",    // Normal range — was nearly invisible against the ocean, now a muted slate that reads without being flashy
+  coolGray: "#2A3040",   // Slightly below normal
+  neutral: "#1A1D24",    // Normal range — intentionally dark. On the globe, countries read as dark terrain against the ocean with bright teal borders drawing the eye. Elevated/Surge states use warm colors to pop off the dark baseline.
   amber: "#F5A623",      // Elevated
   orange: "#E8601C",     // Significant spike
   red: "#D93025",        // Anomalous surge

@@ -228,9 +228,13 @@ export default function GlobeWrapper({
         // Smoothly animate altitude changes on hover enter/exit.
         // Gated on reduced-motion preference — snap instantly when on.
         polygonsTransitionDuration={reducedMotion ? 0 : 250}
+        // Slight base altitude lift (0.018) makes the 3D side faces visible,
+        // which combined with the teal-tinted polygonSideColor simulates
+        // thicker borders without needing non-standard THREE.Line widths.
+        // Hover pops countries up dramatically at 0.06.
         polygonAltitude={(d: GeoFeature) => {
           const iso = getIsoCode(d.properties);
-          return iso && iso === hoveredIso ? 0.06 : 0.01;
+          return iso && iso === hoveredIso ? 0.06 : 0.018;
         }}
         polygonCapColor={(d: GeoFeature) => {
           const iso = getIsoCode(d.properties);
@@ -241,12 +245,16 @@ export default function GlobeWrapper({
           }
           return getCountryColor(iso, viewMode, activityByIso);
         }}
-        polygonSideColor={() => "rgba(30, 50, 80, 0.7)"}
+        // Polygon "sides" — the vertical faces of the extruded country shape.
+        // Tint with a muted teal so the edge reads as part of the border glow
+        // rather than a dark seam. This creates the illusion of a thicker
+        // border since WebGL THREE.Line widths are hardcoded to 1px.
+        polygonSideColor={() => "rgba(0, 191, 165, 0.45)"}
         polygonStrokeColor={(d: GeoFeature) => {
           const iso = getIsoCode(d.properties);
           return iso && iso === hoveredIso
-            ? "rgba(0, 229, 204, 0.95)" // hovered: bright tealMax border
-            : "rgba(0, 191, 165, 0.35)"; // default: tealBright at 35% — subtle but visible
+            ? "#FFFFFF" // hovered: pure white for maximum contrast
+            : "#00E5CC"; // default: bright tealMax at full opacity — bold borders against dark country fill
         }}
         polygonLabel={(d: GeoFeature) => {
           const iso = getIsoCode(d.properties);
