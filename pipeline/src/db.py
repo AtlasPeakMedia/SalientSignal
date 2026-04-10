@@ -287,6 +287,64 @@ class SupabaseDb:
             logger.warning("schema_version probe failed (schema may be uninitialized): %s", exc)
             return 0
 
+    # ---- backfill support (A4) ----
+    def clear_historical_cold_start(self, reference_date: date | None = None) -> int:
+        """Flip cold_start to FALSE for all country_activity rows dated before
+        ``reference_date`` (defaults to today UTC).
+
+        Called by ``import_backfill.py`` after a successful historical import,
+        so the frontend banner swaps from "Baseline calibrating" to "Live
+        Intelligence Data" — cold_start is a UX signal, and after backfill
+        every historical row has a real baseline behind it (even if the first
+        ~7 days of the window had LOW confidence before being overwritten).
+
+        Args:
+            reference_date: UPDATE applies to rows where date < this value.
+                Defaults to today() (UTC interpretation).
+
+        Returns:
+            Number of rows updated. Supabase postgrest doesn't reliably return
+            affected row counts for UPDATE, so we return the count of rows
+            matching the filter BEFORE the update as a best-effort estimate.
+
+        Raises:
+            DbError if the update fails.
+        """
+        ref = reference_date or date.today()
+        client = self._get_client()
+        try:
+            count_resp = (
+                client.table("country_activity")
+                .select("country", count="exact")
+                .lt("date", ref.isoformat())
+                .eq("cold_start", True)
+                .execute()
+            )
+            pending = count_resp.count or 0
+        except Exception as exc:
+            logger.warning("clear_historical_cold_start pre-count failed: %s", exc)
+            pending = -1  # indicate unknown
+
+        try:
+            (
+                client.table("country_activity")
+                .update({"cold_start": False})
+                .lt("date", ref.isoformat())
+                .eq("cold_start", True)
+                .execute()
+            )
+        except Exception as exc:
+            raise DbError(
+                f"clear_historical_cold_start failed for reference_date={ref}: {exc}"
+            ) from exc
+
+        logger.info(
+            "clear_historical_cold_start: flipped cold_start=False on %s rows dated < %s",
+            pending if pending >= 0 else "unknown",
+            ref.isoformat(),
+        )
+        return max(pending, 0)
+
     # ---- read ops ----
     def daily_article_counts(
         self,
@@ -529,6 +587,17 @@ class InMemoryDb:
     def get_schema_version(self) -> int:
         """Return simulated schema version for dry-run."""
         return self._schema_version
+
+    def clear_historical_cold_start(self, reference_date: date | None = None) -> int:
+        """Flip cold_start=False on historical country_activity rows in memory."""
+        ref = reference_date or date.today()
+        ref_iso = ref.isoformat()
+        updated = 0
+        for row in self.country_activity:
+            if row.get("cold_start") and row.get("date", "") < ref_iso:
+                row["cold_start"] = False
+                updated += 1
+        return updated
 
     def record_pipeline_run(
         self,
