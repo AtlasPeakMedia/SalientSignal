@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Wordmark from "@/components/Brand/Wordmark";
 import Clock from "@/components/Clock";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import ViewToggle from "@/components/Globe/ViewToggle";
 import ColorLegend from "@/components/Globe/ColorLegend";
 import GlobeWrapper from "@/components/Globe/GlobeWrapper";
@@ -165,11 +166,13 @@ export default function HomePageClient({
 
       {/* Globe */}
       <div className="relative">
-        <GlobeWrapper
-          viewMode={viewMode}
-          countryActivity={filteredCountryActivity}
-          coordinationArcs={coordinationArcs}
-        />
+        <ErrorBoundary label="Globe">
+          <GlobeWrapper
+            viewMode={viewMode}
+            countryActivity={filteredCountryActivity}
+            coordinationArcs={coordinationArcs}
+          />
+        </ErrorBoundary>
       </div>
 
       {/* Bottom panel — top movers + themes */}
