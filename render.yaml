@@ -11,6 +11,10 @@
 # See also: docs/RENDER_DEPLOYMENT.md for the full step-by-step runbook.
 
 services:
+  # ---------------------------------------------------------------------
+  # Primary pipeline: ingests articles + computes baselines + updates
+  # country_activity rows for the globe.
+  # ---------------------------------------------------------------------
   - type: cron
     name: salientsignal-pipeline
     runtime: docker
@@ -45,3 +49,47 @@ services:
       # headroom against the cron overlap window.
       - key: PIPELINE_TIME_BUDGET_SECONDS
         value: "3000"
+
+  # ---------------------------------------------------------------------
+  # Theme incremental: every hour, fetches the past hour's GKG 2.0 bulk
+  # files from data.gdeltproject.org and updates country_theme_* tables.
+  # Keeps the SCAME dashboard live instead of frozen at whenever the
+  # 15-month historical backfill ended.
+  #
+  # IMPORTANT: this cron will log a one-liner warning and exit 0 for the
+  # first run if schema v3 hasn't been applied yet (no country_theme_*
+  # tables). Apply shared/migrations/002_country_theme_tables.sql in the
+  # Supabase SQL Editor to light this up.
+  #
+  # Separate service from the main pipeline for two reasons:
+  #   1. Isolation — a theme-side bug shouldn't break the main pipeline
+  #      cron and vice versa
+  #   2. Different endpoint — themes hit data.gdeltproject.org (GKG bulk
+  #      CDN, no rate limit) while the pipeline hits api.gdeltproject.org
+  #      (DOC 2.0, rate limited). Keeping them in separate processes
+  #      avoids any cross-contamination of rate-limit backoff state.
+  # ---------------------------------------------------------------------
+  - type: cron
+    name: salientsignal-themes
+    runtime: docker
+    dockerfilePath: pipeline/Dockerfile
+    dockerContext: .
+
+    # Run at :17 past every hour UTC — offset from the main pipeline's
+    # :07 to spread cold-start load on Render's free tier and avoid
+    # either job thrashing the shared container cache.
+    schedule: "17 * * * *"
+
+    plan: free
+
+    # Override the Docker CMD to run the theme incremental instead of
+    # the main pipeline. Render respects dockerCommand.
+    dockerCommand: python -m pipeline.scripts.run_gkg_hourly
+
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
