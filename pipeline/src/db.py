@@ -40,6 +40,10 @@ REQUIRED_SCHEMA_VERSION = 2
 ARTICLES_BATCH_SIZE = 2000
 COUNTRY_ACTIVITY_BATCH_SIZE = 100
 ANALYSIS_CLAIMS_BATCH_SIZE = 500
+# Session 31: country_theme_* batches. These rows are ~150 bytes each (no
+# JSONB, just scalars and one TEXT theme code), so 500 per batch fits well
+# under the 6 MB API limit while cutting round trips 5x vs country_activity.
+THEME_BATCH_SIZE = 500
 
 
 class DbError(Exception):
@@ -160,6 +164,66 @@ class SupabaseDb:
                     f"upsert_country_activity_batch failed on batch "
                     f"{i // COUNTRY_ACTIVITY_BATCH_SIZE + 1} "
                     f"({len(batch)} rows): {exc}"
+                ) from exc
+        return total
+
+    def upsert_country_theme_batch(
+        self,
+        rows: list[dict[str, Any]],
+        period_type: str,
+    ) -> int:
+        """Batch upsert country_theme_{monthly|weekly|daily} rows.
+
+        Session 31 — GKG 2.0 theme backfill target. Each row maps to one
+        (country, audience_type, period_start, theme) primary key in the
+        corresponding country_theme_* table.
+
+        Args:
+            rows: List of dicts produced by ThemeBucket.to_dict(). Keys:
+                country, audience_type, period_start, period_end, theme,
+                article_count, bucket_total, share, avg_tone.
+                The `period_type` field (if ThemeBucket.to_dict() includes it)
+                is stripped — it's implicit in the table name.
+            period_type: One of "monthly" | "weekly" | "daily" selects the
+                target table. Must exactly match a provisioned table name.
+
+        Returns:
+            Total number of rows upserted (== len(rows) on success).
+
+        Raises:
+            DbError on any batch failure. Does not fall back to per-row
+            upserts — failures mid-run abort so the operator can fix the
+            root cause, not silently drop data.
+        """
+        if not rows:
+            return 0
+        if period_type not in ("monthly", "weekly", "daily"):
+            raise ValueError(
+                f"period_type must be monthly|weekly|daily, got {period_type!r}"
+            )
+        table_name = f"country_theme_{period_type}"
+
+        # Strip period_type field if present — it's implicit in table name
+        # and not a column in the schema.
+        clean_rows = [
+            {k: v for k, v in row.items() if k != "period_type"}
+            for row in rows
+        ]
+
+        client = self._get_client()
+        total = 0
+        for i in range(0, len(clean_rows), THEME_BATCH_SIZE):
+            batch = clean_rows[i:i + THEME_BATCH_SIZE]
+            try:
+                client.table(table_name).upsert(
+                    batch,
+                    on_conflict="country,audience_type,period_start,theme",
+                ).execute()
+                total += len(batch)
+            except Exception as exc:
+                raise DbError(
+                    f"upsert_country_theme_batch({period_type}) failed on batch "
+                    f"{i // THEME_BATCH_SIZE + 1} ({len(batch)} rows): {exc}"
                 ) from exc
         return total
 
@@ -509,6 +573,12 @@ class InMemoryDb:
         self.analysis_claims: list[dict[str, Any]] = []
         self.analysis_escalated: list[dict[str, Any]] = []
         self.pipeline_runs: list[dict[str, Any]] = []
+        # Session 31: country_theme_* buckets keyed by period_type
+        self.country_themes: dict[str, list[dict[str, Any]]] = {
+            "monthly": [],
+            "weekly": [],
+            "daily": [],
+        }
         # Simulated schema version for dry-run
         self._schema_version = REQUIRED_SCHEMA_VERSION
 
@@ -529,6 +599,40 @@ class InMemoryDb:
                 if (r.get("country"), r.get("date"), r.get("audience_type")) != key
             ]
             self.country_activity.append(row)
+        return len(rows)
+
+    def upsert_country_theme_batch(
+        self,
+        rows: list[dict[str, Any]],
+        period_type: str,
+    ) -> int:
+        """InMemoryDb version: mirror SupabaseDb.upsert_country_theme_batch."""
+        if not rows:
+            return 0
+        if period_type not in ("monthly", "weekly", "daily"):
+            raise ValueError(
+                f"period_type must be monthly|weekly|daily, got {period_type!r}"
+            )
+        bucket = self.country_themes[period_type]
+        for row in rows:
+            key = (
+                row.get("country"),
+                row.get("audience_type"),
+                row.get("period_start"),
+                row.get("theme"),
+            )
+            # Drop any existing row with this PK, then append the new one
+            bucket[:] = [
+                r for r in bucket
+                if (
+                    r.get("country"),
+                    r.get("audience_type"),
+                    r.get("period_start"),
+                    r.get("theme"),
+                ) != key
+            ]
+            clean = {k: v for k, v in row.items() if k != "period_type"}
+            bucket.append(clean)
         return len(rows)
 
     def upsert_outlets(self, rows: Iterable[dict[str, Any]]) -> int:
