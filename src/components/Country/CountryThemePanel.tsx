@@ -40,6 +40,7 @@
 import { useMemo, useState } from "react";
 import type { AudienceType, CountryThemeRow } from "@/lib/types";
 import { buildThemeNarrative } from "@/lib/theme_narrative";
+import ThemeTimelineSparkline from "./ThemeTimelineSparkline";
 
 interface Props {
   /** Pre-fetched theme rows for this country (all audiences, all periods). */
@@ -129,6 +130,30 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(
     periods[0] ?? null,
   );
+  // V1.5 drill-down: when a theme pill is clicked, remember which theme
+  // the user expanded IN WHICH audience column so the sparkline renders
+  // in the right place. null = nothing expanded.
+  const [expanded, setExpanded] = useState<{
+    audience: AudienceType;
+    theme: string;
+  } | null>(null);
+
+  // Pre-compute a per-theme index for sparkline lookup. Keyed by
+  // `${audience}__${theme}`, the value is the full list of rows for that
+  // theme across all periods — feeding directly into ThemeTimelineSparkline.
+  const themeTimelineIndex = useMemo(() => {
+    const out = new Map<string, CountryThemeRow[]>();
+    for (const row of themes) {
+      const key = `${row.audienceType}__${row.theme}`;
+      const existing = out.get(key);
+      if (existing) {
+        existing.push(row);
+      } else {
+        out.set(key, [row]);
+      }
+    }
+    return out;
+  }, [themes]);
 
   // Empty state: no data at all
   if (themes.length === 0) {
@@ -218,6 +243,17 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
             audience="DOMESTIC"
             country={countryName}
             period={selectedPeriod ? formatPeriodLabel(selectedPeriod) : ""}
+            expandedTheme={
+              expanded?.audience === "DOMESTIC" ? expanded.theme : null
+            }
+            onToggleTheme={(theme) =>
+              setExpanded((prev) =>
+                prev?.audience === "DOMESTIC" && prev.theme === theme
+                  ? null
+                  : { audience: "DOMESTIC", theme },
+              )
+            }
+            themeTimelineIndex={themeTimelineIndex}
             emptyNote={
               intlThemes.length > 0
                 ? "No domestic-facing outlets captured for this country in this period."
@@ -231,6 +267,17 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
             audience="INTERNATIONAL"
             country={countryName}
             period={selectedPeriod ? formatPeriodLabel(selectedPeriod) : ""}
+            expandedTheme={
+              expanded?.audience === "INTERNATIONAL" ? expanded.theme : null
+            }
+            onToggleTheme={(theme) =>
+              setExpanded((prev) =>
+                prev?.audience === "INTERNATIONAL" && prev.theme === theme
+                  ? null
+                  : { audience: "INTERNATIONAL", theme },
+              )
+            }
+            themeTimelineIndex={themeTimelineIndex}
             emptyNote={
               domesticThemes.length > 0
                 ? "No international-facing outlets captured in this period."
@@ -273,6 +320,12 @@ interface ColumnProps {
   audience: AudienceType;
   country: string;
   period: string;
+  /** Currently-expanded theme in this column (null if none). */
+  expandedTheme: string | null;
+  /** Called when a theme pill is clicked — toggles the sparkline. */
+  onToggleTheme: (theme: string) => void;
+  /** Precomputed map of `${audience}__${theme}` → all rows for sparkline */
+  themeTimelineIndex: Map<string, CountryThemeRow[]>;
   emptyNote: string;
 }
 
@@ -283,6 +336,9 @@ function ThemeColumn({
   audience,
   country,
   period,
+  expandedTheme,
+  onToggleTheme,
+  themeTimelineIndex,
   emptyNote,
 }: ColumnProps) {
   // Session 31 V1.5: render a narrative paragraph above the pills. Zero
@@ -324,20 +380,62 @@ function ThemeColumn({
                 t.avgTone === null
                   ? ""
                   : ` · avg tone ${t.avgTone.toFixed(1)}`;
+              const isExpanded = expandedTheme === t.theme;
               return (
-                <span
+                <button
+                  type="button"
                   key={`${t.theme}-${t.periodStart}`}
-                  title={`${t.articleCount} of ${t.bucketTotal} articles (${sharePct}%)${toneLabel}`}
-                  className={`inline-flex items-center rounded-full px-3 py-1 border ${toneClass(
+                  onClick={() => onToggleTheme(t.theme)}
+                  title={`${t.articleCount} of ${t.bucketTotal} articles (${sharePct}%)${toneLabel}\nClick to view 15-month trend`}
+                  className={`inline-flex items-center rounded-full px-3 py-1 border transition-all hover:scale-105 ${toneClass(
                     t.avgTone,
-                  )}`}
+                  )} ${
+                    isExpanded
+                      ? "ring-2 ring-accent-tealBright ring-offset-1 ring-offset-bg-base"
+                      : ""
+                  }`}
                   style={{ fontSize: `${fontRem}rem`, lineHeight: 1.3 }}
                 >
                   {t.label}
-                </span>
+                </button>
               );
             })}
           </div>
+          {/* V1.5 drill-down: when a pill is clicked, render its 15-month
+              sparkline below the grid. Only one theme expanded at a time
+              per audience column. */}
+          {expandedTheme && (
+            <div className="mt-4 p-3 rounded border border-bg-divider bg-bg-raised/30">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-semibold text-text-body">
+                  {
+                    themeTimelineIndex.get(`${audience}__${expandedTheme}`)?.[0]
+                      ?.label || expandedTheme
+                  }{" "}
+                  — 15-month trend
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggleTheme(expandedTheme)}
+                  className="text-xs text-text-secondary hover:text-text-body transition-colors"
+                  aria-label="Close trend view"
+                >
+                  ×
+                </button>
+              </div>
+              <ThemeTimelineSparkline
+                rows={
+                  themeTimelineIndex.get(`${audience}__${expandedTheme}`) ?? []
+                }
+                theme={expandedTheme}
+                height={48}
+              />
+              <div className="mt-1 text-[10px] text-text-secondary text-mono">
+                Bar height = article mentions per month · color = avg tone
+                (red = hostile, amber = negative, teal = positive)
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
