@@ -299,48 +299,71 @@ export default function HomePageClient({
           )}
         </div>
 
-        {/* Trending themes */}
+        {/* Trending themes — pulled from country_theme_monthly (session 31) */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-text-body uppercase tracking-wider">
               Trending Themes
             </h2>
-            <span className="text-xs text-text-secondary text-mono">
-              cross-country
-            </span>
+            <Link
+              href="/methodology#scame-theme-dashboard"
+              className="text-xs text-text-secondary text-mono hover:text-accent-tealBright transition-colors"
+              title="Read the methodology"
+            >
+              this month · SCAME ↗
+            </Link>
           </div>
           {trendingThemes.length === 0 ? (
-            <div className="text-sm text-text-secondary italic py-8 text-center">
-              Theme extraction comes online once GDELT populates the theme field.
+            <div className="text-sm text-text-secondary italic py-8 text-center leading-relaxed">
+              Historical theme data is being ingested from GDELT&apos;s Global
+              Knowledge Graph 2.0. Once the backfill completes, this panel
+              shows the top themes across every monitored country for the
+              current month, with clickable drill-down into country pages.
             </div>
           ) : (
-            <ul className="space-y-2">
-              {trendingThemes.map((theme) => {
-                const isUp = theme.change.startsWith("+");
-                return (
-                  <li
-                    key={theme.theme}
-                    className="flex items-center justify-between p-2.5 rounded-md hover:bg-bg-base/50 transition-colors"
-                  >
-                    <span className="text-sm text-text-body">{theme.label}</span>
-                    <div className="flex items-center gap-3 text-mono text-xs">
-                      <span className="text-text-secondary">{theme.count}</span>
-                      {theme.change && (
-                        <span
-                          className={
-                            isUp
-                              ? "text-accent-tealBright"
-                              : "text-text-secondary"
-                          }
-                        >
-                          {theme.change}
+            <>
+              <ul className="space-y-1.5">
+                {trendingThemes.map((theme, i) => {
+                  // Rank + count bars for quick scanning. The max count in the
+                  // list maps to 100% bar width.
+                  const maxCount =
+                    trendingThemes[0]?.count ?? theme.count ?? 1;
+                  const pct = Math.max(
+                    4,
+                    Math.round((theme.count / maxCount) * 100),
+                  );
+                  return (
+                    <li
+                      key={theme.theme}
+                      className="group relative p-2.5 rounded-md hover:bg-bg-base/50 transition-colors"
+                    >
+                      {/* Bar fill behind the text */}
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-y-0 left-0 rounded-md bg-accent-tealBright/10 transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                      <div className="relative flex items-center justify-between">
+                        <span className="text-sm text-text-body flex items-center gap-2">
+                          <span className="text-mono text-xs text-text-secondary w-4">
+                            {i + 1}
+                          </span>
+                          {theme.label}
                         </span>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                        <span className="text-mono text-xs text-text-secondary">
+                          {theme.count.toLocaleString()}{" "}
+                          <span className="opacity-60">mentions</span>
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-[10px] text-text-secondary mt-3 leading-relaxed">
+                Aggregated across every monitored country for this month.
+                Source: GDELT Global Knowledge Graph 2.0.
+              </p>
+            </>
           )}
         </div>
       </section>

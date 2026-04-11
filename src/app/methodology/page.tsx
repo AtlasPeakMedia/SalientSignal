@@ -332,7 +332,7 @@ export default async function MethodologyPage() {
         </section>
 
         {/* 7. SCAME theme dashboard */}
-        <section className="mb-12">
+        <section className="mb-12" id="scame-theme-dashboard">
           <h2 className="text-2xl font-semibold text-white mb-4">
             7. SCAME theme dashboard
           </h2>
