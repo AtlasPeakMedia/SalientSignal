@@ -78,6 +78,9 @@ data/raw/
 # contain ephemeral run metadata.
 pipeline/data/backfill*.json
 pipeline/data/backfill_import_manifest_*.json
+pipeline/data/theme_backfill*.json
+pipeline/data/theme_smoke_test*.json
+pipeline/data/theme_import_manifest_*.json
 pipeline/logs/
 
 # GDELT raw downloads
