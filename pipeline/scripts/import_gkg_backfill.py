@@ -46,18 +46,17 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+THIS_DIR = Path(__file__).resolve().parent
+PIPELINE_DIR = THIS_DIR.parent
+sys.path.insert(0, str(PIPELINE_DIR))
 
 try:
     from dotenv import load_dotenv  # noqa: E402
-    load_dotenv(REPO_ROOT / "pipeline" / ".env")
+    load_dotenv(PIPELINE_DIR / ".env")
 except ImportError:
     pass
 
-from pipeline.src.db import DbError, SupabaseDb  # noqa: E402
+from src.db import DbError, SupabaseDb  # noqa: E402
 
 logger = logging.getLogger("import_gkg_backfill")
 

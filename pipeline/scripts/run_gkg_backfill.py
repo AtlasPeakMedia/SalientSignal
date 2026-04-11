@@ -68,26 +68,28 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, time as dtime, timedelta, timezone
 from pathlib import Path
 
-# Enable imports when run as `python -m pipeline.scripts.run_gkg_backfill`
-# and when run as `python pipeline/scripts/run_gkg_backfill.py`.
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+# Put pipeline/ on sys.path so `from src.xxx import ...` works both when
+# run as `python -m pipeline.scripts.run_gkg_backfill` from the repo root
+# AND as `python pipeline/scripts/run_gkg_backfill.py`. Matches the
+# convention in run_backfill.py.
+THIS_DIR = Path(__file__).resolve().parent
+PIPELINE_DIR = THIS_DIR.parent
+sys.path.insert(0, str(PIPELINE_DIR))
+
 try:
     from dotenv import load_dotenv  # noqa: E402
-    load_dotenv(REPO_ROOT / "pipeline" / ".env")
+    load_dotenv(PIPELINE_DIR / ".env")
 except ImportError:
     pass  # dotenv is optional — env vars can come from the process environment
 
-from pipeline.src.gkg_client import (  # noqa: E402
+from src.gkg_client import (  # noqa: E402
     GkgFileResult,
     GkgRow,
     fetch_gkg_file,
     iter_15min_slices,
 )
-from pipeline.src.outlets import load_outlets  # noqa: E402
-from pipeline.src.theme_aggregator import (  # noqa: E402
+from src.outlets import load_outlets  # noqa: E402
+from src.theme_aggregator import (  # noqa: E402
     DEFAULT_MIN_ARTICLE_COUNT,
     DEFAULT_TOP_N_PER_BUCKET,
     PeriodType,

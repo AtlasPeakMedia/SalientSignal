@@ -46,24 +46,29 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+THIS_DIR = Path(__file__).resolve().parent
+PIPELINE_DIR = THIS_DIR.parent
+# Match the convention in run_backfill.py: put pipeline/ on sys.path so
+# `from src.xxx import ...` works both when run as `python -m
+# pipeline.scripts.run_gkg_hourly` from the repo root AND when run as
+# `python pipeline/scripts/run_gkg_hourly.py` directly. Also lets the
+# pytest harness import this module's pure functions (pythonpath=src in
+# pyproject.toml already makes src/* importable during tests).
+sys.path.insert(0, str(PIPELINE_DIR))
 
 try:
     from dotenv import load_dotenv  # noqa: E402
-    load_dotenv(REPO_ROOT / "pipeline" / ".env")
+    load_dotenv(PIPELINE_DIR / ".env")
 except ImportError:
     pass
 
-from pipeline.src.db import DbError, SupabaseDb  # noqa: E402
-from pipeline.src.gkg_client import (  # noqa: E402
+from src.db import DbError, SupabaseDb  # noqa: E402
+from src.gkg_client import (  # noqa: E402
     GkgRow,
     fetch_gkg_file,
 )
-from pipeline.src.outlets import load_outlets  # noqa: E402
-from pipeline.src.theme_aggregator import (  # noqa: E402
+from src.outlets import load_outlets  # noqa: E402
+from src.theme_aggregator import (  # noqa: E402
     DEFAULT_MIN_ARTICLE_COUNT,
     DEFAULT_TOP_N_PER_BUCKET,
     aggregate_themes,
