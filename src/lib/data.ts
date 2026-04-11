@@ -582,6 +582,18 @@ function prettifyTheme(theme: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** Expose label + description for a theme code (both may be empty strings). */
+export function getThemeLabel(theme: string): {
+  label: string;
+  description: string;
+} {
+  const entry = THEME_LABELS[theme];
+  return {
+    label: entry?.label ?? prettifyTheme(theme),
+    description: entry?.description ?? "",
+  };
+}
+
 // ============================================================================
 // Country theme rollups (Session 31 — SCAME dashboard)
 // ============================================================================
