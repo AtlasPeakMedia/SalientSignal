@@ -466,26 +466,85 @@ export async function getCoordinationArcs(): Promise<CoordinationArc[]> {
 }
 
 /**
- * Top trending themes across all countries for the most recent date.
- * Computed client-side (TypeScript) from the top_themes JSONB on each country_activity row.
+ * Top trending themes across all countries for the most recent month.
+ *
+ * Session 31 rewrite: previously read from country_activity.top_themes
+ * JSONB which was always empty because the DOC 2.0 ArtList mode doesn't
+ * return theme data (silent bug). Now queries country_theme_monthly and
+ * aggregates article_count across every (country, audience) bucket for
+ * the most recent period_start present in the table.
+ *
+ * Graceful degradation: if country_theme_monthly doesn't exist (schema
+ * v3 not applied) or is empty (backfill not imported yet), returns [].
+ * The home page's "Trending Themes" card handles empty gracefully
+ * already.
+ *
+ * Why use monthly and not the hourly-refreshed daily table: monthly is
+ * what the SCAME dashboard is tuned for, and the home page card is a
+ * slower-moving overview not a live ticker. The daily table will only
+ * have real data after the hourly cron has run a few times; monthly
+ * has the full 15-month backfill + current-month updates.
  */
 export async function getTrendingThemes(): Promise<TrendingTheme[]> {
   if (isUsingDummyData()) {
     return TRENDING_THEMES;
   }
 
-  const countries = await getAllCountryActivity();
-  if (countries.length === 0) return [];
+  const client = getServerSupabase();
+  if (!client) return [];
 
-  // Aggregate theme counts across all countries / both audience types.
+  // Find the most recent period_start in country_theme_monthly.
+  const { data: latestRow, error: latestErr } = await client
+    .from("country_theme_monthly")
+    .select("period_start")
+    .order("period_start", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestErr) {
+    // 42P01 = "relation does not exist" — schema v3 not applied yet.
+    // Fall through silently and return [] so the home page renders.
+    if (latestErr.code !== "42P01") {
+      console.error(
+        "[data] getTrendingThemes latest-period query error:",
+        JSON.stringify({
+          message: latestErr.message,
+          code: latestErr.code,
+        }),
+      );
+    }
+    return [];
+  }
+  if (!latestRow?.period_start) return [];
+
+  // Pull all rows for that month — could be ~120K on full backfill, but
+  // PostgREST caps at 1000 by default. Use range() to get more if needed.
+  // For the MVP, capping at 5000 rows is enough to surface the top 8.
+  const { data: rows, error: rowsErr } = await client
+    .from("country_theme_monthly")
+    .select("theme, article_count")
+    .eq("period_start", latestRow.period_start)
+    .order("article_count", { ascending: false })
+    .range(0, 4999);
+
+  if (rowsErr) {
+    console.error(
+      "[data] getTrendingThemes rows query error:",
+      JSON.stringify({
+        message: rowsErr.message,
+        code: rowsErr.code,
+      }),
+    );
+    return [];
+  }
+  if (!rows || rows.length === 0) return [];
+
+  // Aggregate article_count per theme across every country/audience
+  // bucket in this month. A theme that appears in many countries will
+  // naturally rise to the top of the global trending list.
   const byTheme = new Map<string, number>();
-  for (const c of countries) {
-    for (const t of c.domestic.topThemes ?? []) {
-      byTheme.set(t.theme, (byTheme.get(t.theme) ?? 0) + t.count);
-    }
-    for (const t of c.international.topThemes ?? []) {
-      byTheme.set(t.theme, (byTheme.get(t.theme) ?? 0) + t.count);
-    }
+  for (const row of rows as { theme: string; article_count: number }[]) {
+    byTheme.set(row.theme, (byTheme.get(row.theme) ?? 0) + row.article_count);
   }
 
   return Array.from(byTheme.entries())

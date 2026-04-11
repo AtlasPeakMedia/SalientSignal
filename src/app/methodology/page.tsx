@@ -55,10 +55,11 @@ export default async function MethodologyPage() {
             <li>4. Baseline methodology</li>
             <li>5. Deviation scoring</li>
             <li>6. Coordination detection</li>
-            <li>7. Anti-hallucination validation</li>
-            <li>8. What we do NOT do</li>
-            <li>9. Known limitations</li>
-            <li>10. Why no FVEY</li>
+            <li>7. SCAME theme dashboard</li>
+            <li>8. Anti-hallucination validation</li>
+            <li>9. What we do NOT do</li>
+            <li>10. Known limitations</li>
+            <li>11. Why no FVEY</li>
           </ol>
         </nav>
 
@@ -330,10 +331,83 @@ export default async function MethodologyPage() {
           </p>
         </section>
 
-        {/* 7. Anti-hallucination validation */}
+        {/* 7. SCAME theme dashboard */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold text-white mb-4">
-            7. Anti-hallucination validation
+            7. SCAME theme dashboard
+          </h2>
+          <p className="text-text-body leading-relaxed mb-4">
+            The country page&apos;s theme panel is a SCAME-framework browser
+            built on a separate data source from the globe. SCAME — Source,
+            Content, Audience, Media, Effect — is the standard PSYOP
+            analytic framework for breaking down a message. We implement it
+            as a structured view that, for any selected country and month,
+            shows the top themes in state media split by intended audience.
+          </p>
+          <p className="text-text-body leading-relaxed mb-4">
+            <strong className="text-white">The audience split is never
+            collapsed.</strong> What a regime tells its own population and
+            what it tells the world are two fundamentally different messages
+            with different strategic purposes. Our dashboard enforces this
+            separation by rendering two columns side-by-side — Domestic on
+            the left, International on the right — and by resolving the
+            outlet&apos;s audience type from our manual classification rather
+            than from GDELT&apos;s own country tagging (which conflates both).
+          </p>
+          <p className="text-text-body leading-relaxed mb-4">
+            The underlying data comes from{" "}
+            <a
+              href="http://data.gdeltproject.org/gdeltv2/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-tealBright hover:text-accent-tealMax"
+            >
+              GDELT Global Knowledge Graph 2.0 bulk files
+            </a>
+            , published every 15 minutes to a separate CDN from the DOC 2.0
+            API. Each GKG row has per-article theme tags in the V1Themes
+            column (semicolon-separated GDELT codes like
+            <span className="text-mono"> ARMEDCONFLICT</span>,{" "}
+            <span className="text-mono">TAX_ETHNICITY_CHINESE</span>,{" "}
+            <span className="text-mono">WB_694_BROADCAST_AND_MEDIA</span>)
+            plus the V1.5Tone column with an average-tone float per article
+            in the standard -10 (most hostile) to +10 (most celebratory)
+            range.
+          </p>
+          <p className="text-text-body leading-relaxed mb-4">
+            Our pipeline downloads those bulk files, filters each row to
+            our 300+ monitored domains, and aggregates by{" "}
+            <span className="text-mono">(country, audience_type, month,
+            theme)</span>. A single aggregated bucket records: how many
+            articles in that month mentioned the theme, what share of the
+            month&apos;s coverage they represented, and the average tone of
+            those mentions. We keep the top 50 themes per bucket and
+            discard the long tail as noise.
+          </p>
+          <p className="text-text-body leading-relaxed mb-4">
+            The dashboard renders each bucket three ways: a two-sentence
+            narrative paragraph generated from a pure template (no LLM),
+            a word-cloud-style pill grid where pill size scales with share
+            and pill color reflects average tone, and — when you click a
+            pill — a 15-month sparkline showing how that specific theme
+            has trended for that specific (country, audience) combination.
+          </p>
+          <p className="text-text-body leading-relaxed">
+            What this means in practice: click Iran, read the dashboard,
+            and you see that in April 2026 Iran&apos;s English-language
+            state media dominated coverage with Armed Conflict, Ceasefire,
+            and Islamic Religion at an average tone near -7 — the measurable
+            signature of wartime grievance narratives pitched at foreign
+            audiences. Click the Armed Conflict pill and the sparkline
+            shows exactly when that narrative started surging and when it
+            peaked.
+          </p>
+        </section>
+
+        {/* 8. Anti-hallucination validation */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            8. Anti-hallucination validation
           </h2>
           <p className="text-text-body leading-relaxed mb-4">
             Every claim the pipeline produces — a classification, a
@@ -381,10 +455,10 @@ export default async function MethodologyPage() {
           </p>
         </section>
 
-        {/* 8. What we do NOT do */}
+        {/* 9. What we do NOT do */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold text-white mb-4">
-            8. What we do NOT do
+            9. What we do NOT do
           </h2>
           <ul className="list-disc list-outside pl-6 space-y-3 text-text-body">
             <li>
@@ -424,10 +498,10 @@ export default async function MethodologyPage() {
           </ul>
         </section>
 
-        {/* 9. Known limitations */}
+        {/* 10. Known limitations */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold text-white mb-4">
-            9. Known limitations
+            10. Known limitations
           </h2>
           <ul className="list-disc list-outside pl-6 space-y-3 text-text-body">
             <li>
@@ -459,14 +533,37 @@ export default async function MethodologyPage() {
             </li>
             <li>
               <strong className="text-white">
-                Top themes are not populated for historical dates.
+                GKG 2.0 does not crawl the .ir / .kp / .cu / .sy TLDs.
               </strong>{" "}
-              The 15-month backfill captured daily publication volume but
-              did NOT capture article-level themes, because that would have
-              required thousands of additional queries. Historical country
-              pages show the baseline and deviation, but the "top themes"
-              list will be sparse until the live pipeline has accumulated
-              enough data.
+              We discovered this the hard way while building the SCAME
+              theme dashboard. Two full 15-min GKG files covering ~2,000
+              Iran-related articles contained zero matches for any .ir
+              domain — not irna.ir, not farsnews.ir, not tasnimnews.com,
+              not mehrnews.com, not any of the 13 Farsi-language outlets
+              in our database. Iranian state media only surfaces in GKG
+              through English-language editions hosted on .com TLDs
+              (Tehran Times, Press TV&apos;s .com mirror, Fars News
+              English), which all end up in the INTERNATIONAL audience
+              bucket. The same is almost certainly true for DPRK, Cuba,
+              Syria, and partially for Belarus and Venezuela. As a
+              result, the <strong className="text-white">Domestic column
+              of the SCAME panel will be empty or very sparse for those
+              countries</strong>, not because they aren&apos;t publishing
+              in their own languages, but because GDELT&apos;s crawler
+              doesn&apos;t reach them.
+            </li>
+            <li>
+              <strong className="text-white">
+                Top-themes on the home page depend on the GKG 2.0 backfill.
+              </strong>{" "}
+              GDELT&apos;s DOC 2.0 ArtList mode (used by the live hourly
+              pipeline) does NOT return per-article theme data — only URL,
+              title, domain, language, and source country. Historical and
+              current theme data come exclusively from the GKG 2.0 bulk
+              ingestion path, which populates a separate set of tables.
+              Until the GKG theme backfill has been imported to Supabase,
+              the home page&apos;s Trending Themes panel and the country
+              pages&apos; SCAME dashboard will show empty states.
             </li>
             <li>
               <strong className="text-white">
@@ -481,10 +578,10 @@ export default async function MethodologyPage() {
           </ul>
         </section>
 
-        {/* 10. Why no FVEY */}
+        {/* 11. Why no FVEY */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold text-white mb-4">
-            10. Why no FVEY
+            11. Why no FVEY
           </h2>
           <p className="text-text-body leading-relaxed mb-4">
             SalientSignal explicitly excludes state and state-aligned media
