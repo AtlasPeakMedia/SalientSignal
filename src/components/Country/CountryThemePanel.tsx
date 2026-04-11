@@ -38,7 +38,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { CountryThemeRow } from "@/lib/types";
+import type { AudienceType, CountryThemeRow } from "@/lib/types";
+import { buildThemeNarrative } from "@/lib/theme_narrative";
 
 interface Props {
   /** Pre-fetched theme rows for this country (all audiences, all periods). */
@@ -214,6 +215,9 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
             label="Domestic audience"
             sublabel="What state media tells its own population"
             themes={domesticThemes}
+            audience="DOMESTIC"
+            country={countryName}
+            period={selectedPeriod ? formatPeriodLabel(selectedPeriod) : ""}
             emptyNote={
               intlThemes.length > 0
                 ? "No domestic-facing outlets captured for this country in this period."
@@ -224,6 +228,9 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
             label="International audience"
             sublabel="What state media tells the world (non-native languages, foreign-facing outlets)"
             themes={intlThemes}
+            audience="INTERNATIONAL"
+            country={countryName}
+            period={selectedPeriod ? formatPeriodLabel(selectedPeriod) : ""}
             emptyNote={
               domesticThemes.length > 0
                 ? "No international-facing outlets captured in this period."
@@ -263,10 +270,33 @@ interface ColumnProps {
   label: string;
   sublabel: string;
   themes: CountryThemeRow[];
+  audience: AudienceType;
+  country: string;
+  period: string;
   emptyNote: string;
 }
 
-function ThemeColumn({ label, sublabel, themes, emptyNote }: ColumnProps) {
+function ThemeColumn({
+  label,
+  sublabel,
+  themes,
+  audience,
+  country,
+  period,
+  emptyNote,
+}: ColumnProps) {
+  // Session 31 V1.5: render a narrative paragraph above the pills. Zero
+  // LLM dependency — template-based. See src/lib/theme_narrative.ts.
+  const narrative = useMemo(() => {
+    if (themes.length === 0 || !period) return null;
+    return buildThemeNarrative({
+      country,
+      audienceType: audience,
+      period,
+      themes,
+    });
+  }, [themes, audience, country, period]);
+
   return (
     <div>
       <div className="mb-3">
@@ -280,28 +310,35 @@ function ThemeColumn({ label, sublabel, themes, emptyNote }: ColumnProps) {
           {emptyNote}
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2 items-baseline">
-          {themes.slice(0, 40).map((t) => {
-            const fontRem = pillSizeRem(t.share);
-            const sharePct = Math.round(t.share * 100);
-            const toneLabel =
-              t.avgTone === null
-                ? ""
-                : ` · avg tone ${t.avgTone.toFixed(1)}`;
-            return (
-              <span
-                key={`${t.theme}-${t.periodStart}`}
-                title={`${t.articleCount} of ${t.bucketTotal} articles (${sharePct}%)${toneLabel}`}
-                className={`inline-flex items-center rounded-full px-3 py-1 border ${toneClass(
-                  t.avgTone,
-                )}`}
-                style={{ fontSize: `${fontRem}rem`, lineHeight: 1.3 }}
-              >
-                {t.label}
-              </span>
-            );
-          })}
-        </div>
+        <>
+          {narrative && (
+            <div className="mb-4 p-3 rounded border border-bg-divider bg-bg-raised/30 text-sm text-text-body leading-relaxed">
+              {narrative}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 items-baseline">
+            {themes.slice(0, 40).map((t) => {
+              const fontRem = pillSizeRem(t.share);
+              const sharePct = Math.round(t.share * 100);
+              const toneLabel =
+                t.avgTone === null
+                  ? ""
+                  : ` · avg tone ${t.avgTone.toFixed(1)}`;
+              return (
+                <span
+                  key={`${t.theme}-${t.periodStart}`}
+                  title={`${t.articleCount} of ${t.bucketTotal} articles (${sharePct}%)${toneLabel}`}
+                  className={`inline-flex items-center rounded-full px-3 py-1 border ${toneClass(
+                    t.avgTone,
+                  )}`}
+                  style={{ fontSize: `${fontRem}rem`, lineHeight: 1.3 }}
+                >
+                  {t.label}
+                </span>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

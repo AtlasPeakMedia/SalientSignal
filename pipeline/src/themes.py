@@ -1,16 +1,37 @@
-"""GDELT theme tag extraction.
+"""GDELT theme tag extraction + label lookup.
 
-Phase 1/2 deliberately stays simple: we use GDELT's existing GKG theme codes
-verbatim. Algorithm 5 in the spec describes a richer custom theme taxonomy
-(NATO_AGGRESSION, WESTERN_HYPOCRISY, etc.) but that's deferred to Phase 8 once
-the pipeline is collecting data.
+**Session 31 architectural note — READ BEFORE USING extract_themes()**
+
+`extract_themes()` was designed for a GDELT DOC 2.0 API response that
+includes per-article theme tags. It turns out that API mode does NOT exist:
+`ArtList` returns only `url, url_mobile, title, seendate, socialimage,
+domain, language, sourcecountry` — no themes, no GKG fields. And the
+"wordcloud themes" modes (`wordcloudthemes`, `wordcloudenglishthemes`)
+return "Invalid mode" when queried. This was discovered during session 31
+when we noticed all 118 articles in Supabase had `gdelt_themes=[]`.
+
+As a result, `extract_themes()` called on any real GDELT DOC 2.0 ArtList
+row will silently return an empty list — the fields it looks for
+(`gkg_themes`, `themes`, `v2themes`, etc.) simply don't exist in the
+response. This is a known dead code path kept in place so the existing
+pipeline doesn't crash, but NEW theme ingestion should go through the
+GKG 2.0 bulk client instead:
+
+    from pipeline.src.gkg_client import fetch_gkg_file, GkgRow
+    from pipeline.src.theme_aggregator import aggregate_themes  # NOT this module's
+
+The `label_for()` function in THIS module is still used by the frontend
+and by both GKG and DOC-era pipelines to turn GDELT theme codes like
+`ARMEDCONFLICT` into human-readable labels. That part is fine.
 
 Public surface:
 
-    extract_themes(article_row)         — pull theme codes off a GDELT row
-    aggregate_themes(rows)              — count themes across many rows
-    load_theme_labels()                 — read pipeline/data/theme_labels.json
-    label_for(code)                     — human-readable label for a code
+    extract_themes(article_row)         — legacy, returns [] for DOC 2.0 rows
+    aggregate_themes(rows)               — legacy counter, works on any rows
+                                            BUT prefer theme_aggregator.aggregate_themes
+                                            (which understands the GkgRow dataclass)
+    load_theme_labels()                  — read pipeline/data/theme_labels.json
+    label_for(code)                      — human-readable label for a code
 """
 from __future__ import annotations
 
@@ -49,11 +70,18 @@ def _split_themes(value: Any) -> list[str]:
 
 
 def extract_themes(article_row: dict[str, Any]) -> list[str]:
-    """Pull GDELT theme codes off an article row.
+    """**LEGACY** — returns [] for any real GDELT DOC 2.0 ArtList row.
 
-    GDELT DOC 2.0 article_search returns articles without GKG themes by default;
-    they come from the separate GKG endpoint or from `gkg_theme` columns. We
-    look for any of the column names we might see and union them.
+    The DOC 2.0 API doesn't actually return theme data in ArtList mode
+    (confirmed session 31). This function is kept for backward compat with
+    the existing pipeline code path and will correctly extract themes if
+    a row happens to have a `gkg_themes` / `themes` / `v2themes` field,
+    but that never happens for live GDELT responses.
+
+    For live theme ingestion, use pipeline.src.gkg_client.fetch_gkg_file()
+    which reads GDELT GKG 2.0 bulk CSV files from the separate CDN at
+    data.gdeltproject.org/gdeltv2/. Those files DO contain per-article
+    V1Themes and V2Themes columns.
     """
     candidates: list[str] = []
     for key in ("gkg_themes", "themes", "theme", "v2themes", "v2_themes"):
