@@ -28,10 +28,13 @@ import {
 } from "./dummy-data";
 import type {
   AudienceActivity,
+  AudienceType,
   CountryActivity,
   CoordinationArc,
+  CountryThemeRow,
   DeviationLevel,
   Headline,
+  ThemePeriod,
   TrendingTheme,
 } from "./types";
 
@@ -496,9 +499,123 @@ export async function getTrendingThemes(): Promise<TrendingTheme[]> {
     }));
 }
 
+// Theme labels imported from the pipeline package — 156+ GDELT codes with
+// human-readable labels and descriptions. Falls back to the regex prettifier
+// when a code isn't in the mapping (new or obscure GDELT themes).
+import themeLabelsJson from "./theme_labels.json";
+
+interface ThemeLabelEntry {
+  label: string;
+  description?: string;
+}
+
+const THEME_LABELS: Record<string, ThemeLabelEntry> =
+  (themeLabelsJson as { themes?: Record<string, ThemeLabelEntry> }).themes ?? {};
+
 function prettifyTheme(theme: string): string {
+  const entry = THEME_LABELS[theme];
+  if (entry?.label) return entry.label;
+  // Fallback: lowercase + Title Case the underscored GDELT code.
   return theme
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// ============================================================================
+// Country theme rollups (Session 31 — SCAME dashboard)
+// ============================================================================
+
+interface DbCountryThemeRow {
+  country: string;
+  audience_type: string;
+  period_start: string;
+  period_end: string;
+  theme: string;
+  article_count: number;
+  bucket_total: number;
+  share: number;
+  avg_tone: number | null;
+}
+
+/**
+ * Themes aggregated by (country, audience, period) for one country.
+ *
+ * Queries `country_theme_{period}` for the given ISO-2 country, returning
+ * rows sorted by period_start DESC then article_count DESC. Callers are
+ * expected to group by (audience_type, period_start) and render the top
+ * themes for each bucket as a word cloud or ranked list.
+ *
+ * Graceful degradation: if the table doesn't exist yet (schema v3 not
+ * applied, which is the state until Don runs the migration), we catch
+ * the PostgREST "relation does not exist" error and return an empty
+ * array. The UI shows an empty state in that case instead of a 500.
+ *
+ * Limit: we cap at 500 rows to avoid DoS via URL query. For a single
+ * country over 15 months that's 15 periods × 2 audiences × ~50 top
+ * themes = 1500 max in the real dataset; 500 is one audience × 15
+ * periods × 33 themes — enough for the first render. Paginate if needed.
+ */
+export async function getCountryThemes(
+  iso2: string,
+  period: ThemePeriod = "monthly",
+): Promise<CountryThemeRow[]> {
+  const normalized = iso2.toUpperCase();
+
+  if (isUsingDummyData()) {
+    // The dummy fixture has no theme data; return empty for now.
+    return [];
+  }
+
+  const client = getServerSupabase();
+  if (!client) return [];
+
+  const tableName = `country_theme_${period}`;
+  const { data, error } = await client
+    .from(tableName)
+    .select(
+      "country, audience_type, period_start, period_end, theme, article_count, bucket_total, share, avg_tone",
+    )
+    .eq("country", normalized)
+    .order("period_start", { ascending: false })
+    .order("article_count", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    // PostgREST code 42P01 = "relation does not exist" — schema v3 not
+    // applied yet, which is the expected state until Don runs the migration.
+    // Log and return empty rather than crashing the page.
+    if (error.code === "42P01") {
+      console.warn(
+        `[data] ${tableName} does not exist yet. Apply schema v3 and run ` +
+          `import_gkg_backfill.py. Returning empty themes for ${normalized}.`,
+      );
+      return [];
+    }
+    console.error(
+      `[data] Supabase error fetching themes for ${normalized}:`,
+      JSON.stringify({
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      }),
+    );
+    return [];
+  }
+
+  if (!data || data.length === 0) return [];
+
+  return (data as DbCountryThemeRow[]).map((row) => ({
+    country: row.country,
+    audienceType: row.audience_type as AudienceType,
+    periodStart: row.period_start,
+    periodEnd: row.period_end,
+    theme: row.theme,
+    label: prettifyTheme(row.theme),
+    articleCount: row.article_count,
+    bucketTotal: row.bucket_total,
+    share: row.share,
+    avgTone: row.avg_tone,
+  }));
 }

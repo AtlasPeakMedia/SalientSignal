@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Wordmark from "@/components/Brand/Wordmark";
+import CountryThemePanel from "@/components/Country/CountryThemePanel";
 import {
   getCountryActivityByCode,
   getCountryHeadlines,
+  getCountryThemes,
   isUsingDummyData,
 } from "@/lib/data";
 import { requireAuth } from "@/lib/auth";
@@ -24,9 +26,10 @@ export default async function CountryPage({ params }: PageProps) {
   await requireAuth();
 
   const { code } = await params;
-  const [country, headlines] = await Promise.all([
+  const [country, headlines, themes] = await Promise.all([
     getCountryActivityByCode(code),
     getCountryHeadlines(code),
+    getCountryThemes(code, "monthly"),
   ]);
   if (!country) notFound();
 
@@ -83,6 +86,9 @@ export default async function CountryPage({ params }: PageProps) {
           headlines={international}
         />
       </section>
+
+      {/* SCAME theme browser (Session 31) */}
+      <CountryThemePanel themes={themes} countryName={country.name} />
 
       {/* Footer */}
       <footer className="max-w-[1400px] mx-auto px-6 py-6 text-xs text-text-secondary border-t border-bg-divider">

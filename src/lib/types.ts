@@ -80,3 +80,33 @@ export interface TrendingTheme {
   count: number;
   change: string;
 }
+
+/**
+ * One aggregated theme row for the SCAME dashboard.
+ *
+ * Comes from the `country_theme_{monthly|weekly|daily}` tables, populated
+ * by the GDELT GKG 2.0 bulk-file ingestion pipeline (Session 31). Each row
+ * represents "in bucket (country, audience, period), the theme `theme`
+ * appeared in `articleCount` articles out of `bucketTotal` total, which
+ * is `share` of the bucket; the average tone of those articles was
+ * `avgTone`."
+ *
+ * The dashboard queries this grouped by country + audience + period to
+ * render word clouds and narrative breakdowns. DOMESTIC vs INTERNATIONAL
+ * is NEVER conflated — that's the core product innovation.
+ */
+export interface CountryThemeRow {
+  country: string;
+  audienceType: AudienceType;
+  periodStart: string; // YYYY-MM-DD
+  periodEnd: string; // YYYY-MM-DD
+  theme: string;
+  /** Prettified human-readable label (e.g. "Armed Conflict" for ARMEDCONFLICT) */
+  label: string;
+  articleCount: number;
+  bucketTotal: number;
+  share: number; // 0..1
+  avgTone: number | null; // -10..+10, null if no tone data
+}
+
+export type ThemePeriod = "monthly" | "weekly" | "daily";
