@@ -130,6 +130,9 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(
     periods[0] ?? null,
   );
+  // V1.5+ search filter: free-text match against theme.label and theme.theme
+  // (raw code). Empty string = no filter. Case-insensitive.
+  const [filterQuery, setFilterQuery] = useState("");
   // V1.5 drill-down: when a theme pill is clicked, remember which theme
   // the user expanded IN WHICH audience column so the sparkline renders
   // in the right place. null = nothing expanded.
@@ -187,8 +190,26 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
 
   const domesticKey = `DOMESTIC__${selectedPeriod ?? ""}`;
   const intlKey = `INTERNATIONAL__${selectedPeriod ?? ""}`;
-  const domesticThemes = grouped.get(domesticKey) ?? [];
-  const intlThemes = grouped.get(intlKey) ?? [];
+  const rawDomesticThemes = grouped.get(domesticKey) ?? [];
+  const rawIntlThemes = grouped.get(intlKey) ?? [];
+
+  // Apply search filter. Empty query = pass-through, otherwise
+  // case-insensitive substring match against both the human label
+  // (e.g. "Armed Conflict") and the raw GDELT code (e.g. "ARMEDCONFLICT").
+  // This lets users search either way — type "nato" to find NATO_AGGRESSION,
+  // type "religion" to find TAX_RELIGION_ISLAMIC and TAX_RELIGION_MUSLIM.
+  const filterFn = (t: CountryThemeRow) => {
+    if (!filterQuery.trim()) return true;
+    const q = filterQuery.trim().toLowerCase();
+    return (
+      t.label.toLowerCase().includes(q) ||
+      t.theme.toLowerCase().includes(q)
+    );
+  };
+  const domesticThemes = rawDomesticThemes.filter(filterFn);
+  const intlThemes = rawIntlThemes.filter(filterFn);
+  const hiddenDomesticCount = rawDomesticThemes.length - domesticThemes.length;
+  const hiddenIntlCount = rawIntlThemes.length - intlThemes.length;
 
   return (
     <section className="max-w-[1400px] mx-auto px-6 mb-8">
@@ -234,6 +255,45 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
           )}
         </div>
 
+        {/* Theme search filter — applies to both audience columns */}
+        <div className="mb-5 relative">
+          <label
+            htmlFor="theme-filter"
+            className="block text-xs text-text-secondary mb-1.5"
+          >
+            Filter themes (both columns)
+          </label>
+          <div className="relative">
+            <input
+              id="theme-filter"
+              type="text"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              placeholder="Try &quot;conflict&quot;, &quot;ethnic&quot;, &quot;religion&quot;, &quot;sanctions&quot;&hellip;"
+              className="w-full max-w-md pl-3 pr-9 py-2 bg-bg-base border border-bg-divider rounded-md text-sm text-text-body focus:outline-none focus:border-accent-tealBright transition-colors"
+              aria-describedby="theme-filter-help"
+            />
+            {filterQuery && (
+              <button
+                type="button"
+                onClick={() => setFilterQuery("")}
+                aria-label="Clear filter"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-body text-sm w-6 h-6 flex items-center justify-center rounded hover:bg-bg-raised/50 transition-colors"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          {filterQuery && (
+            <p
+              id="theme-filter-help"
+              className="text-[10px] text-text-secondary mt-1.5"
+            >
+              Filter applies to both columns. Press × to clear.
+            </p>
+          )}
+        </div>
+
         {/* Two-column audience split */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ThemeColumn
@@ -254,10 +314,15 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
               )
             }
             themeTimelineIndex={themeTimelineIndex}
+            hiddenByFilterCount={hiddenDomesticCount}
+            filterActive={filterQuery.trim().length > 0}
+            onClearFilter={() => setFilterQuery("")}
             emptyNote={
-              intlThemes.length > 0
-                ? "No domestic-facing outlets captured for this country in this period."
-                : "No data for this period."
+              rawDomesticThemes.length > 0 && domesticThemes.length === 0
+                ? `No domestic themes match "${filterQuery}" for this period.`
+                : rawIntlThemes.length > 0
+                  ? "No domestic-facing outlets captured for this country in this period."
+                  : "No data for this period."
             }
           />
           <ThemeColumn
@@ -278,10 +343,15 @@ export default function CountryThemePanel({ themes, countryName }: Props) {
               )
             }
             themeTimelineIndex={themeTimelineIndex}
+            hiddenByFilterCount={hiddenIntlCount}
+            filterActive={filterQuery.trim().length > 0}
+            onClearFilter={() => setFilterQuery("")}
             emptyNote={
-              domesticThemes.length > 0
-                ? "No international-facing outlets captured in this period."
-                : "No data for this period."
+              rawIntlThemes.length > 0 && intlThemes.length === 0
+                ? `No international themes match "${filterQuery}" for this period.`
+                : rawDomesticThemes.length > 0
+                  ? "No international-facing outlets captured in this period."
+                  : "No data for this period."
             }
           />
         </div>
@@ -326,6 +396,12 @@ interface ColumnProps {
   onToggleTheme: (theme: string) => void;
   /** Precomputed map of `${audience}__${theme}` → all rows for sparkline */
   themeTimelineIndex: Map<string, CountryThemeRow[]>;
+  /** How many themes were filtered out by the search query. */
+  hiddenByFilterCount: number;
+  /** True if the filter input is currently non-empty. */
+  filterActive: boolean;
+  /** Called when the user clicks "show all" after a filter empties the column. */
+  onClearFilter: () => void;
   emptyNote: string;
 }
 
@@ -339,6 +415,9 @@ function ThemeColumn({
   expandedTheme,
   onToggleTheme,
   themeTimelineIndex,
+  hiddenByFilterCount,
+  filterActive,
+  onClearFilter,
   emptyNote,
 }: ColumnProps) {
   // Session 31 V1.5: render a narrative paragraph above the pills. Zero
@@ -364,12 +443,34 @@ function ThemeColumn({
       {themes.length === 0 ? (
         <div className="text-xs text-text-secondary italic py-6 px-3 rounded border border-bg-divider bg-bg-raised/30">
           {emptyNote}
+          {filterActive && (
+            <button
+              type="button"
+              onClick={onClearFilter}
+              className="block mt-2 not-italic text-accent-tealBright hover:underline"
+            >
+              Clear filter →
+            </button>
+          )}
         </div>
       ) : (
         <>
           {narrative && (
             <div className="mb-4 p-3 rounded border border-bg-divider bg-bg-raised/30 text-sm text-text-body leading-relaxed">
               {narrative}
+            </div>
+          )}
+          {hiddenByFilterCount > 0 && (
+            <div className="mb-3 text-[11px] text-text-secondary">
+              Showing {themes.length} of {themes.length + hiddenByFilterCount}{" "}
+              themes.{" "}
+              <button
+                type="button"
+                onClick={onClearFilter}
+                className="text-accent-tealBright hover:underline"
+              >
+                Show all
+              </button>
             </div>
           )}
           <div className="flex flex-wrap gap-2 items-baseline">

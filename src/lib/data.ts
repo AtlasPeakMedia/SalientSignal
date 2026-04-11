@@ -25,6 +25,7 @@ import {
   COORDINATION_ARCS,
   TRENDING_THEMES,
   HEADLINES,
+  DUMMY_COUNTRY_THEMES,
 } from "./dummy-data";
 import type {
   AudienceActivity,
@@ -622,8 +623,11 @@ export async function getCountryThemes(
   const normalized = iso2.toUpperCase();
 
   if (isUsingDummyData()) {
-    // The dummy fixture has no theme data; return empty for now.
-    return [];
+    // Dummy fixture has a small synthetic set for CN (both audiences,
+    // three months) so the dashboard UI can be visually exercised in
+    // dev mode. Other countries return empty — they exist as stubs so
+    // the country page still renders with the empty-state panel.
+    return DUMMY_COUNTRY_THEMES[normalized] ?? [];
   }
 
   const client = getServerSupabase();

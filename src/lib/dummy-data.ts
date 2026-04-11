@@ -12,13 +12,22 @@ import type {
   AudienceType,
   CountryActivity,
   CoordinationArc,
+  CountryThemeRow,
   DeviationLevel,
   Headline,
   TrendingTheme,
 } from "./types";
 
 // Re-export for legacy callers that still import types from here.
-export type { AudienceType, CountryActivity, CoordinationArc, DeviationLevel, Headline, TrendingTheme };
+export type {
+  AudienceType,
+  CountryActivity,
+  CoordinationArc,
+  CountryThemeRow,
+  DeviationLevel,
+  Headline,
+  TrendingTheme,
+};
 
 /**
  * Calculate deviation level from ratio + z-score.
@@ -504,3 +513,112 @@ export const TRENDING_THEMES = [
   { theme: "DEVELOPMENT_MODEL", label: "Development Partnership", count: 87, change: "+15%" },
   { theme: "MILITARY_STRENGTH", label: "Military Strength", count: 78, change: "−3%" },
 ];
+
+/**
+ * Synthetic country_theme_monthly rows for demo/preview only.
+ *
+ * Covers April 2026 + March 2026 + February 2026 for two countries (CN, RU)
+ * and both audience types. Enough data to exercise: the period picker
+ * (3 months visible), the two-column audience split, the tone-tinted
+ * pills (red/amber/neutral/teal), the sparkline drill-down (each theme
+ * appears across all 3 months so the mini-chart has something to draw),
+ * AND the free-text filter introduced in the V1.5+ update.
+ *
+ * Shapes exactly match CountryThemeRow so getCountryThemes() in dummy
+ * mode can return this directly with zero conversion.
+ */
+function makeThemeRow(
+  country: string,
+  audience: AudienceType,
+  periodStart: string,
+  periodEnd: string,
+  theme: string,
+  label: string,
+  articleCount: number,
+  bucketTotal: number,
+  avgTone: number | null,
+): CountryThemeRow {
+  return {
+    country,
+    audienceType: audience,
+    periodStart,
+    periodEnd,
+    theme,
+    label,
+    articleCount,
+    bucketTotal,
+    share: Math.round((articleCount / bucketTotal) * 10000) / 10000,
+    avgTone,
+  };
+}
+
+// The numbers are illustrative, not real. But the *relative* balance
+// matches what you'd expect from the underlying product:
+//   - hostile framing skews tone negative on conflict themes
+//   - celebratory framing skews tone positive on achievement themes
+//   - DOMESTIC and INTERNATIONAL columns tell different stories
+const DUMMY_CN_DOMESTIC_THEMES_APR = [
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "TAX_ETHNICITY_CHINESE", "Chinese Ethnicity", 42, 120, 2.1),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "ECON_DEVELOPMENT", "Economic Development", 38, 120, 3.4),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "TAX_FNCACT_PRESIDENT", "President", 35, 120, 2.8),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "LEADERSHIP", "Leadership", 31, 120, 3.1),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "TAIWAN_SOVEREIGNTY", "Taiwan Sovereignty", 24, 120, -4.2),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "MILITARY", "Military", 18, 120, -1.1),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "ENV_CLIMATECHANGE", "Climate Change", 15, 120, 0.2),
+  makeThemeRow("CN", "DOMESTIC", "2026-04-01", "2026-04-30",
+    "TECHNOLOGY", "Technology", 12, 120, 4.5),
+];
+
+const DUMMY_CN_INTERNATIONAL_THEMES_APR = [
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "MULTIPOLARITY", "Multipolarity", 56, 140, 3.2),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "NATO_AGGRESSION", "NATO Aggression", 48, 140, -5.7),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "ECONOMIC_COERCION", "Economic Coercion", 41, 140, -4.8),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "DEVELOPMENT_MODEL", "Development Partnership", 39, 140, 4.1),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "WESTERN_HYPOCRISY", "Western Hypocrisy", 29, 140, -6.1),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "BRI_COOPERATION", "Belt And Road Cooperation", 22, 140, 5.3),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "SOVEREIGNTY", "Sovereignty", 18, 140, 0.8),
+  makeThemeRow("CN", "INTERNATIONAL", "2026-04-01", "2026-04-30",
+    "TECHNOLOGY", "Technology", 14, 140, 3.9),
+];
+
+function shiftMonth(rows: CountryThemeRow[], newStart: string, newEnd: string, scale: number): CountryThemeRow[] {
+  // Shift a list of theme rows to a different period and scale the counts.
+  // Used to generate trailing-month dummy data so the sparkline has
+  // something to render across multiple months.
+  return rows.map((r) => {
+    const scaled = Math.max(1, Math.round(r.articleCount * scale));
+    return {
+      ...r,
+      periodStart: newStart,
+      periodEnd: newEnd,
+      articleCount: scaled,
+      bucketTotal: Math.max(scaled, r.bucketTotal),
+      share: Math.round((scaled / Math.max(scaled, r.bucketTotal)) * 10000) / 10000,
+    };
+  });
+}
+
+export const DUMMY_COUNTRY_THEMES: Record<string, CountryThemeRow[]> = {
+  CN: [
+    ...DUMMY_CN_DOMESTIC_THEMES_APR,
+    ...DUMMY_CN_INTERNATIONAL_THEMES_APR,
+    ...shiftMonth(DUMMY_CN_DOMESTIC_THEMES_APR, "2026-03-01", "2026-03-31", 0.9),
+    ...shiftMonth(DUMMY_CN_INTERNATIONAL_THEMES_APR, "2026-03-01", "2026-03-31", 0.8),
+    ...shiftMonth(DUMMY_CN_DOMESTIC_THEMES_APR, "2026-02-01", "2026-02-28", 0.7),
+    ...shiftMonth(DUMMY_CN_INTERNATIONAL_THEMES_APR, "2026-02-01", "2026-02-28", 0.6),
+  ],
+};
