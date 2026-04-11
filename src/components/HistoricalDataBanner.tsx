@@ -13,8 +13,9 @@
  * When to show:
  *   - isDummy=true           → show with "Preview data" language
  *   - isStale=true            → show with "Stale data" language (pipeline
- *                                haven't posted a row in >24h)
- *   - Otherwise               → hide. The data is fresh and trustworthy.
+ *                                hasn't posted a row in >60h — multi-day gap)
+ *   - Otherwise               → hide. The data is fresh or just-aging and the
+ *                                header freshness pill handles the nuance.
  *
  * The banner is deliberately low-urgency (matches the dark academia palette)
  * because these are status signals, not errors.
@@ -24,8 +25,9 @@ interface Props {
   /** True when the page is rendering against the dummy fixture. */
   isDummy?: boolean;
   /**
-   * True when the most-recent country_activity date is more than 24 hours
-   * old. Indicates the hourly pipeline cron hasn't run (Render outage, etc.)
+   * True when the most-recent country_activity date is more than 60 hours
+   * old (multi-day pipeline outage). Aging data between 36-60h is surfaced
+   * via the header freshness pill instead of this loud banner.
    */
   isStale?: boolean;
   /** Master visibility switch. When false, nothing renders regardless of other flags. */
@@ -52,7 +54,7 @@ export default function HistoricalDataBanner({
   } else if (isStale) {
     label = "Stale data";
     message =
-      "The hourly pipeline hasn't posted a new row in over 24 hours. " +
+      "The hourly pipeline hasn't posted a new row in more than 60 hours. " +
       "Baselines and deviations are accurate as of the last successful run.";
   } else {
     label = "Live intelligence data";

@@ -91,26 +91,63 @@ export default function HomePageClient({
       })
     : "the most recent day";
 
-  // D16: Post-backfill — the 21-day cold-start period is gone. The banner
-  // now shows for two reasons: (a) dummy data fixture is active, or (b)
-  // latestDate is stale relative to today (pipeline outage).
+  // D16 + stale-data logic. `latestDate` is a YYYY-MM-DD string from the
+  // backfill or the most recent pipeline run. Compute three buckets:
+  //   - "fresh"  : <36h old  (pipeline ran at least once today)
+  //   - "aging"  : 36–60h old (data is yesterday's; show mild warning)
+  //   - "stale"  : >60h old  (multi-day gap; show loud banner)
+  // The 36h threshold accounts for the hourly Render cron cadence — we want
+  // to show "just now" coloring right after each tick but flip to "aging"
+  // the next calendar day.
   //
-  // latestDate is a YYYY-MM-DD string from the server. We treat anything
-  // older than 2 days as stale to account for timezone + hourly cron cadence.
-  const isStale = (() => {
-    if (isDummy || !latestDate) return false;
+  // We use a single `freshnessHours` number computed from `latestDate` at
+  // UTC-midnight so the server and client render the same string (hydration
+  // safety — no wall-clock drift).
+  const { freshnessHours, freshnessLabel, isAging, isStale } = (() => {
+    if (isDummy || !latestDate) {
+      return {
+        freshnessHours: 0,
+        freshnessLabel: "",
+        isAging: false,
+        isStale: false,
+      };
+    }
     try {
       const latest = new Date(latestDate + "T00:00:00Z").getTime();
       const now = Date.now();
-      const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-      return now - latest > twoDaysMs;
+      const diffMs = now - latest;
+      const hours = Math.floor(diffMs / (60 * 60 * 1000));
+      const days = Math.floor(hours / 24);
+      let label = "";
+      if (hours < 2) label = "fresh";
+      else if (hours < 36) label = `${hours}h old`;
+      else if (days === 1) label = "1 day old";
+      else label = `${days} days old`;
+      return {
+        freshnessHours: hours,
+        freshnessLabel: label,
+        isAging: hours >= 36 && hours < 60,
+        isStale: hours >= 60,
+      };
     } catch {
-      return false;
+      return {
+        freshnessHours: 0,
+        freshnessLabel: "",
+        isAging: false,
+        isStale: false,
+      };
     }
   })();
 
   const showBanner = isDummy || isStale;
   const headerBadge = isDummy ? "DEMO" : "LIVE";
+
+  // Freshness pill color tiers.
+  const freshnessColorClass = isStale
+    ? "text-accent-red border-accent-red/40"
+    : isAging
+      ? "text-accent-amber border-accent-amber/40"
+      : "text-accent-tealBright border-accent-tealBright/40";
 
   return (
     <main className="min-h-screen">
@@ -146,10 +183,21 @@ export default function HomePageClient({
         <div className="flex items-center gap-4">
           <h1 className="text-sm text-text-secondary">
             <span className="text-text-body font-medium">
-              {isDummy ? "Demo activity" : "Today's activity"}
+              {isDummy ? "Demo activity" : "Latest activity"}
             </span>
             <span className="mx-2 text-bg-divider">•</span>
             <span className="text-mono">{dateLabel}</span>
+            {!isDummy && freshnessLabel && (
+              <>
+                <span className="mx-2 text-bg-divider">•</span>
+                <span
+                  className={`text-mono text-xs px-2 py-0.5 rounded border ${freshnessColorClass}`}
+                  title={`Data is ${freshnessHours} hours old`}
+                >
+                  {freshnessLabel}
+                </span>
+              </>
+            )}
             {selectedRegions !== null && (
               <>
                 <span className="mx-2 text-bg-divider">•</span>
