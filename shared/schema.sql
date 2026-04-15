@@ -3,7 +3,9 @@
 -- Constraint: Free tier (Supabase 500 MB) — purge articles >30 days manually.
 --
 -- Phase 2 red team fixes applied (from proud-jumping-key.md Phase 2 Deep Plan):
---   P2-C8: DISABLE ROW LEVEL SECURITY on all tables (prevents silent write failures)
+--   P2-C8 (revised by migration 003): ENABLE RLS on all tables. No policies defined,
+--          so anon role (publishable key) gets blocked at PostgREST. Service role
+--          bypasses RLS, so the pipeline + Next.js server keep full access.
 --   P2-C9: schema_version table + pre-flight check
 --   P2-C4: analysis_escalated table (ESCALATE claims no longer silently dropped)
 --   P2-H7: DROP started_at_monotonic (useless process-local clock)
@@ -51,7 +53,7 @@ CREATE TABLE IF NOT EXISTS outlet_classification (
 );
 CREATE INDEX IF NOT EXISTS idx_outlets_country ON outlet_classification(country);
 CREATE INDEX IF NOT EXISTS idx_outlets_audience ON outlet_classification(audience_type);
-ALTER TABLE outlet_classification DISABLE ROW LEVEL SECURITY;
+ALTER TABLE outlet_classification ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 2. Articles (rolling 30 days, GDELT-sourced)
@@ -86,7 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_articles_country_date ON articles(source_country,
 CREATE INDEX IF NOT EXISTS idx_articles_src_aud_date
     ON articles(source_country, audience_type, pub_date DESC);
 CREATE INDEX IF NOT EXISTS idx_articles_domain ON articles(source_domain);
-ALTER TABLE articles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 3. Country activity (one row per country/date/audience_type — drives globe)
@@ -112,7 +114,7 @@ CREATE TABLE IF NOT EXISTS country_activity (
         CHECK (audience_type IN ('DOMESTIC', 'INTERNATIONAL', 'DIASPORA'))
 );
 CREATE INDEX IF NOT EXISTS idx_country_activity_date ON country_activity(date DESC);
-ALTER TABLE country_activity DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_activity ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 4. Coordination events (cross-country narrative coordination)
@@ -132,7 +134,7 @@ CREATE TABLE IF NOT EXISTS coordination_events (
 );
 CREATE INDEX IF NOT EXISTS idx_coordination_date ON coordination_events(date DESC);
 CREATE INDEX IF NOT EXISTS idx_coordination_theme ON coordination_events(theme);
-ALTER TABLE coordination_events DISABLE ROW LEVEL SECURITY;
+ALTER TABLE coordination_events ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 5. Daily snapshots (kept forever, tiny footprint, drives historical view)
@@ -147,7 +149,7 @@ CREATE TABLE IF NOT EXISTS daily_snapshots (
     silences            JSONB,                           -- countries below baseline
     created_at          TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE daily_snapshots DISABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_snapshots ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 6. Pipeline runs (health monitoring — drives "last updated" banner)
@@ -168,7 +170,7 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
 );
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started ON pipeline_runs(started_at_utc DESC);
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_outcome ON pipeline_runs(outcome);
-ALTER TABLE pipeline_runs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE pipeline_runs ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 7. Analysis claims — every claim the pipeline makes, tagged with verdict
@@ -201,7 +203,7 @@ CREATE TABLE IF NOT EXISTS analysis_claims (
 CREATE INDEX IF NOT EXISTS idx_claims_type ON analysis_claims(claim_type);
 CREATE INDEX IF NOT EXISTS idx_claims_verdict ON analysis_claims(verdict);
 CREATE INDEX IF NOT EXISTS idx_claims_created ON analysis_claims(created_at DESC);
-ALTER TABLE analysis_claims DISABLE ROW LEVEL SECURITY;
+ALTER TABLE analysis_claims ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 8. Suppressed claims audit (claims the anti-hal agent killed)
@@ -221,7 +223,7 @@ CREATE TABLE IF NOT EXISTS analysis_suppressed (
         CHECK (octet_length(suppression_reason) <= 4096)
 );
 CREATE INDEX IF NOT EXISTS idx_suppressed_status ON analysis_suppressed(manual_review_status);
-ALTER TABLE analysis_suppressed DISABLE ROW LEVEL SECURITY;
+ALTER TABLE analysis_suppressed ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 9. Analysis escalated (CRITICAL addition — P2-C4)
@@ -249,7 +251,7 @@ CREATE TABLE IF NOT EXISTS analysis_escalated (
 CREATE INDEX IF NOT EXISTS idx_escalated_status ON analysis_escalated(review_status);
 CREATE INDEX IF NOT EXISTS idx_escalated_created ON analysis_escalated(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_escalated_severity ON analysis_escalated(severity);
-ALTER TABLE analysis_escalated DISABLE ROW LEVEL SECURITY;
+ALTER TABLE analysis_escalated ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- 11. Country theme rollups (Session 31 — GKG 2.0 bulk ingestion)
@@ -300,7 +302,7 @@ CREATE INDEX IF NOT EXISTS idx_theme_monthly_period
     ON country_theme_monthly(period_start DESC, period_end DESC);
 CREATE INDEX IF NOT EXISTS idx_theme_monthly_theme_lookup
     ON country_theme_monthly(theme, period_start DESC);
-ALTER TABLE country_theme_monthly DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_theme_monthly ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS country_theme_weekly (
     country             CHAR(2) NOT NULL,
@@ -331,7 +333,7 @@ CREATE INDEX IF NOT EXISTS idx_theme_weekly_period
     ON country_theme_weekly(period_start DESC, period_end DESC);
 CREATE INDEX IF NOT EXISTS idx_theme_weekly_theme_lookup
     ON country_theme_weekly(theme, period_start DESC);
-ALTER TABLE country_theme_weekly DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_theme_weekly ENABLE ROW LEVEL SECURITY;
 
 -- Daily table is provisioned but only backfilled for the last 30 days.
 -- Older daily data rolls up into weekly and is purged from country_theme_daily.
@@ -362,7 +364,7 @@ CREATE INDEX IF NOT EXISTS idx_theme_daily_country_period
     ON country_theme_daily(country, period_start DESC);
 CREATE INDEX IF NOT EXISTS idx_theme_daily_theme_lookup
     ON country_theme_daily(theme, period_start DESC);
-ALTER TABLE country_theme_daily DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_theme_daily ENABLE ROW LEVEL SECURITY;
 
 -- Bump schema version for the new theme tables
 INSERT INTO schema_version (version, notes)

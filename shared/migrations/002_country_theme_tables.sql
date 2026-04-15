@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_theme_monthly_period
     ON country_theme_monthly(period_start DESC, period_end DESC);
 CREATE INDEX IF NOT EXISTS idx_theme_monthly_theme_lookup
     ON country_theme_monthly(theme, period_start DESC);
-ALTER TABLE country_theme_monthly DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_theme_monthly ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- country_theme_weekly
@@ -80,7 +80,7 @@ CREATE INDEX IF NOT EXISTS idx_theme_weekly_period
     ON country_theme_weekly(period_start DESC, period_end DESC);
 CREATE INDEX IF NOT EXISTS idx_theme_weekly_theme_lookup
     ON country_theme_weekly(theme, period_start DESC);
-ALTER TABLE country_theme_weekly DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_theme_weekly ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- country_theme_daily (rolling 30-day window, not full 15 months)
@@ -112,7 +112,7 @@ CREATE INDEX IF NOT EXISTS idx_theme_daily_country_period
     ON country_theme_daily(country, period_start DESC);
 CREATE INDEX IF NOT EXISTS idx_theme_daily_theme_lookup
     ON country_theme_daily(theme, period_start DESC);
-ALTER TABLE country_theme_daily DISABLE ROW LEVEL SECURITY;
+ALTER TABLE country_theme_daily ENABLE ROW LEVEL SECURITY;
 
 ------------------------------------------------------------------
 -- Bump schema version
