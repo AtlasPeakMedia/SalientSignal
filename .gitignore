@@ -99,3 +99,6 @@ coverage/
 # package-lock.json - keep
 # poetry.lock - keep
 # uv.lock - keep
+
+# Claude Code session state
+.claude/
